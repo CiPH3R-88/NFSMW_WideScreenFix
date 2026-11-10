@@ -29,6 +29,7 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 ### ⚙️ Physics & Miscellaneous
 * **High-Precision SimRate:** Decoupled 200 Hz physics simulation ticker for high refresh rate monitors.
 * **Skip Intro:** Bypasses startup logos and intro movies.
+* **Windows Cursor Toggle:** Optional hardware Windows OS cursor in menus without software cursor latency or stretching.
 * **Portable Saves & Registry:** Redirects game settings from Windows Registry into a local file and supports custom save game folders.
 * **Mod Compatibility:** Works out of the box with **X360Stuff** and **Sunset Mod** with automatic conflict resolution.
 
@@ -50,14 +51,15 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 | `[MOVIES]` | `WideScreenMovie` (1 = Fill 16:9, 2 = Aspect Correct) |
 | `[GRAPHICS]`| `MotionBlur`, `ConsoleGamma` |
 | `[SHADOW]` | `ShadowsRes`, `ShadowsFix`, `ImproveShadowLOD`, `AutoScaleShadowsRes`, `ShadowMapTextureFormat` |
-| `[MISC]` | `SkipIntro`, `SimRate`, `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir` |
+| `[MISC]` | `SkipIntro`, `SimRate`, `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`, `Win Cursor` |
 | `[NOS TRAIL]`| `NosTrail`, `NOSTrailLength`, `NOSTrailPositionScalar` |
 
 ---
 
 ## Credits
 
-* **Toru** — Full-color YUV LUT calculation logic and X360Stuff reference.
 * **Nlg** — Providing the IDA Pro database for NFS Most Wanted.
+* **Toru** — Full-color YUV LUT calculation logic and X360Stuff reference.
 * **Archie** — Sunset Mod codebase, which helped implement and add the Motion Blur option in the in-game Video Settings.
-* **ThirteenAG** — Referred to for initial research.
+* **ThirteenAG** — Referred to for initial research and memory addresses.
+
