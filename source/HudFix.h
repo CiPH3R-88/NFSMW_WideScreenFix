@@ -36,18 +36,18 @@ namespace HudFix {
 
     namespace WideScreenHUD {
         // Native FEng Engine API functions in speed.exe
-        using FEngFindObjectFn = void*(__cdecl*)(const char* packageName, unsigned int objectHash);
-        using FEngGetCenterFn  = void(__cdecl*)(void* object, float* outX, float* outY);
-        using FEngSetCenterFn  = void(__cdecl*)(void* object, float x, float y);
+        using FEngFindObjectFn = void* (__cdecl*)(const char* packageName, unsigned int objectHash);
+        using FEngGetCenterFn = void(__cdecl*)(void* object, float* outX, float* outY);
+        using FEngSetCenterFn = void(__cdecl*)(void* object, float x, float y);
         using QueuePackageMessageFn = void(__fastcall*)(void* instance, void* edx, int messageHash, const char* packageName, int a4);
-        using SetWideScreenModeFn   = char(__thiscall*)(void* instance);
+        using SetWideScreenModeFn = char(__thiscall*)(void* instance);
 
         inline const auto FEngFindObject = reinterpret_cast<FEngFindObjectFn>(0x00524850);
-        inline const auto FEngGetCenter  = reinterpret_cast<FEngGetCenterFn>(0x00524EE0);
-        inline const auto FEngSetCenter  = reinterpret_cast<FEngSetCenterFn>(0x00525050);
+        inline const auto FEngGetCenter = reinterpret_cast<FEngGetCenterFn>(0x00524EE0);
+        inline const auto FEngSetCenter = reinterpret_cast<FEngSetCenterFn>(0x00525050);
 
         inline QueuePackageMessageFn s_OriginalQueuePackageMessage = nullptr;
-        inline SetWideScreenModeFn   s_OriginalSetWideScreenMode   = nullptr;
+        inline SetWideScreenModeFn   s_OriginalSetWideScreenMode = nullptr;
 
         inline std::unordered_map<void*, std::pair<float, float>> s_OriginalCenters;
 
@@ -62,10 +62,10 @@ namespace HudFix {
         inline void ApplyGroupOffset(const char* packageName) {
             if (!packageName) return;
 
-            constexpr unsigned int LEFT_GROUP  = 0x1603009E; // Minimap group
+            constexpr unsigned int LEFT_GROUP = 0x1603009E; // Minimap group
             constexpr unsigned int RIGHT_GROUP = 0x5D0101F1; // Tachometer / Speedometer group
 
-            void* left  = FEngFindObject(packageName, LEFT_GROUP);
+            void* left = FEngFindObject(packageName, LEFT_GROUP);
             void* right = FEngFindObject(packageName, RIGHT_GROUP);
 
             auto move = [](void* object, float delta) {
@@ -77,7 +77,7 @@ namespace HudFix {
                     it = s_OriginalCenters.emplace(object, std::make_pair(x, y)).first;
                 }
                 FEngSetCenter(object, it->second.first + delta, it->second.second);
-            };
+                };
 
             move(left, -s_WideScreenHUDOffset);
             move(right, s_WideScreenHUDOffset);
@@ -218,9 +218,9 @@ namespace HudFix {
             // With widescreen projection scale (s_HudScaleX) active, centering the quad around s_FEHudPosX
             // places the mirror in the top-center with correct 1:1 aspect ratio.
             constexpr float halfWidth = 130.0f;
-            v[4]  = s_FEHudPosX - halfWidth;
-            v[8]  = s_FEHudPosX - halfWidth;
-            v[0]  = s_FEHudPosX + halfWidth;
+            v[4] = s_FEHudPosX - halfWidth;
+            v[8] = s_FEHudPosX - halfWidth;
+            v[0] = s_FEHudPosX + halfWidth;
             v[12] = s_FEHudPosX + halfWidth;
         }
         return s_OriginalMirrorRender ? s_OriginalMirrorRender(poly, textureInfo, flags) : 0;
@@ -281,8 +281,8 @@ namespace HudFix {
 
     // --- Windows Cursor Toggle ---
     // Verified from IDA: sub_516F70 (0x00516F70) cursor frame update and dword_8F374C (cursor active flag)
-    constexpr uintptr_t ADDR_MOUSE_ACTIVE     = 0x008F374C;
-    constexpr uintptr_t ADDR_CURSOR_CALLSITE  = 0x006E71D0; // call sub_516F70 in sub_6E6E40
+    constexpr uintptr_t ADDR_MOUSE_ACTIVE = 0x008F374C;
+    constexpr uintptr_t ADDR_CURSOR_CALLSITE = 0x006E71D0; // call sub_516F70 in sub_6E6E40
     constexpr uintptr_t ADDR_DRAW_CURSOR_FUNC = 0x0056FDB0; // sub_56FDB0 (software cursor draw)
 
     using CursorUpdateFn = void(__cdecl*)();
@@ -295,7 +295,8 @@ namespace HudFix {
             if (visible && !isCurrentlyVisible) {
                 while (ShowCursor(TRUE) < 0) {}
                 SetCursor(LoadCursorA(NULL, IDC_ARROW));
-            } else if (!visible && isCurrentlyVisible) {
+            }
+            else if (!visible && isCurrentlyVisible) {
                 while (ShowCursor(FALSE) >= 0) {}
                 SetCursor(NULL);
             }
@@ -308,7 +309,8 @@ namespace HudFix {
         if (g_Config.WinCursor != 0) {
             // Win Cursor = 1: Show Windows OS cursor in menus, hide during gameplay
             SetWinCursorVisible(isMenuCursorActive);
-        } else {
+        }
+        else {
             // Win Cursor = 0 (Default): Block/hide Windows cursor
             SetWinCursorVisible(false);
         }
@@ -321,6 +323,8 @@ namespace HudFix {
     }
 
     inline void InitWinCursor(int winCursor) {
+        if (winCursor == 0) return;
+
         if (!s_OriginalCursorUpdate) {
             s_OriginalCursorUpdate = reinterpret_cast<CursorUpdateFn>(
                 MemoryTools::GetCallTarget(ADDR_CURSOR_CALLSITE));
@@ -328,13 +332,8 @@ namespace HudFix {
                 reinterpret_cast<uintptr_t>(CursorUpdateHook));
         }
 
-        if (winCursor != 0) {
-            // Suppress software cursor draw by making sub_56FDB0 return immediately (0xC3 = retn)
-            MemoryTools::Write<uint8_t>(ADDR_DRAW_CURSOR_FUNC, 0xC3);
-        } else {
-            // Block/hide Windows cursor immediately on startup
-            SetWinCursorVisible(false);
-        }
+        // Suppress software cursor draw by making sub_56FDB0 return immediately (0xC3 = retn)
+        MemoryTools::Write<uint8_t>(ADDR_DRAW_CURSOR_FUNC, 0xC3);
     }
 }
 

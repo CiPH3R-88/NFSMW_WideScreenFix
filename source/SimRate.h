@@ -24,15 +24,33 @@ namespace SimRate {
     inline float s_SimHz = 200.0f;
     inline bool s_SimRateEnabled = false;
 
+    inline int GetDesktopRefreshRate() {
+        DEVMODEA dm = { 0 };
+        dm.dmSize = sizeof(dm);
+        if (EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &dm) && dm.dmDisplayFrequency >= 60) {
+            return static_cast<int>(dm.dmDisplayFrequency);
+        }
+        return 60;
+    }
+
     inline void Init(bool enable, int configRate = 1) {
         if (!enable) return;
 
         // Determine simulation frequency (Hz)
-        // 1 = Default 200 Hz Decoupled Physics; > 1 = Custom Hz if explicitly specified
+        // 1 = Dynamic (Matches monitor refresh rate, default)
+        // 2 = Default 200 Hz Decoupled Physics
+        // > 2 = Custom Hz if explicitly specified
         float targetHz = 200.0f;
-        if (configRate > 1) {
+        if (configRate == 1) {
+            targetHz = static_cast<float>(GetDesktopRefreshRate());
+        } else if (configRate == 2) {
+            targetHz = 200.0f;
+        } else if (configRate > 2) {
             targetHz = static_cast<float>(configRate);
         }
+
+        if (targetHz < 60.0f) targetHz = 60.0f;
+        if (targetHz > 500.0f) targetHz = 500.0f;
 
         s_SimHz = targetHz;
         s_SimFrameTime = 1.0f / targetHz;
@@ -67,4 +85,3 @@ namespace SimRate {
 }
 
 #endif // NFSMW_WIDESCREENFIX_SIMRATE_H
-

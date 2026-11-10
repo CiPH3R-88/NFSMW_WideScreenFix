@@ -40,7 +40,7 @@ struct Settings {
 
     // MISC
     int SkipIntro = 0;
-    int SimRate = 0; // 0 = Off, 1 = On (200 Hz Decoupled Physics)
+    int SimRate = 1; // 0 = Off | 1 = Dynamic (Matches monitor refresh rate, Default) | 2 = Fixed 200Hz | > 2 = Custom Hz
     int WriteSettingsToFile = 0;
     int WinCursor = 0; // 0 = Off (default, block Windows cursor), 1 = On (allow Windows cursor)
     std::string CustomUserFilesDirectoryInGameDir = "";
@@ -108,7 +108,7 @@ struct Settings {
         SunSetInstalled = std::filesystem::exists(GamePath / "scripts" / "SunSet.asi");
 
         SkipIntro = GetPrivateProfileIntA("MISC", "SkipIntro", 0, iniStr.c_str());
-        SimRate = GetPrivateProfileIntA("MISC", "SimRate", 0, iniStr.c_str());
+        SimRate = GetPrivateProfileIntA("MISC", "SimRate", 1, iniStr.c_str());
         WriteSettingsToFile = GetPrivateProfileIntA("MISC", "WriteSettingsToFile", 0, iniStr.c_str());
         WinCursor = GetPrivateProfileIntA("MISC", "WinCursor", 0, iniStr.c_str());
         if (!WinCursor) {

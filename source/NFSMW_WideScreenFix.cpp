@@ -63,7 +63,7 @@ static void InitializeMod() {
     // 7. Windows Cursor Toggle (0 = Default in-game cursor, blocks Windows cursor | 1 = Windows OS cursor)
     HudFix::InitWinCursor(g_Config.WinCursor);
 
-    // 8. High-Precision SimRate (200 Hz Decoupled Physics)
+    // 8. High-Precision SimRate (1 = Dynamic Monitor Hz, 2 = Fixed 200 Hz)
     if (g_Config.SimRate != 0) {
         SimRate::Init(true, g_Config.SimRate);
     }
