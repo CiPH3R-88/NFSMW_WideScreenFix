@@ -4,6 +4,7 @@
 
 #include "MemoryTools.h"
 #include "Resolution.h"
+#include "Config.h"
 #include <cmath>
 #include <unordered_map>
 
@@ -275,6 +276,64 @@ namespace HudFix {
             WideScreenHUD::Init();
             Resolution::RegisterOnResChange(UpdateWideScreenHUD);
             Resolution::RegisterOnResChange(WideScreenHUD::UpdateOffset);
+        }
+    }
+
+    // --- Windows Cursor Toggle ---
+    // Verified from IDA: sub_516F70 (0x00516F70) cursor frame update and dword_8F374C (cursor active flag)
+    constexpr uintptr_t ADDR_MOUSE_ACTIVE     = 0x008F374C;
+    constexpr uintptr_t ADDR_CURSOR_CALLSITE  = 0x006E71D0; // call sub_516F70 in sub_6E6E40
+    constexpr uintptr_t ADDR_DRAW_CURSOR_FUNC = 0x0056FDB0; // sub_56FDB0 (software cursor draw)
+
+    using CursorUpdateFn = void(__cdecl*)();
+    inline CursorUpdateFn s_OriginalCursorUpdate = nullptr;
+
+    inline void SetWinCursorVisible(bool visible) {
+        CURSORINFO ci = { sizeof(CURSORINFO) };
+        if (GetCursorInfo(&ci)) {
+            bool isCurrentlyVisible = (ci.flags & CURSOR_SHOWING) != 0;
+            if (visible && !isCurrentlyVisible) {
+                while (ShowCursor(TRUE) < 0) {}
+                SetCursor(LoadCursorA(NULL, IDC_ARROW));
+            } else if (!visible && isCurrentlyVisible) {
+                while (ShowCursor(FALSE) >= 0) {}
+                SetCursor(NULL);
+            }
+        }
+    }
+
+    inline void __cdecl CursorUpdateHook() {
+        bool isMenuCursorActive = (*reinterpret_cast<uint32_t*>(ADDR_MOUSE_ACTIVE) != 0);
+
+        if (g_Config.WinCursor != 0) {
+            // Win Cursor = 1: Show Windows OS cursor in menus, hide during gameplay
+            SetWinCursorVisible(isMenuCursorActive);
+        } else {
+            // Win Cursor = 0 (Default): Block/hide Windows cursor
+            SetWinCursorVisible(false);
+        }
+
+        // Always run the game's original sub_516F70 so internal frontend state updates cleanly.
+        // If WinCursor is 1, sub_56FDB0 returns immediately via a patched 'retn' (0xC3).
+        if (s_OriginalCursorUpdate) {
+            s_OriginalCursorUpdate();
+        }
+    }
+
+    inline void InitWinCursor(int winCursor) {
+        if (!s_OriginalCursorUpdate) {
+            s_OriginalCursorUpdate = reinterpret_cast<CursorUpdateFn>(
+                MemoryTools::GetCallTarget(ADDR_CURSOR_CALLSITE));
+            MemoryTools::MakeCALL(ADDR_CURSOR_CALLSITE,
+                reinterpret_cast<uintptr_t>(CursorUpdateHook));
+        }
+
+        if (winCursor != 0) {
+            // Suppress software cursor draw by making sub_56FDB0 return immediately (0xC3 = retn)
+            MemoryTools::Write<uint8_t>(ADDR_DRAW_CURSOR_FUNC, 0xC3);
+        } else {
+            // Block/hide Windows cursor immediately on startup
+            SetWinCursorVisible(false);
         }
     }
 }

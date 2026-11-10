@@ -125,7 +125,8 @@ namespace ShadowFix {
     }
 
     inline void ApplyTextureFormat(int formatOption) {
-        if (formatOption < 0) return;
+        // X360Stuff entirely replaces shadow rendering; ignore format patches to prevent shadows from disappearing.
+        if (formatOption < 0 || g_Config.X360StuffInstalled) return;
 
         // Auto (0) selects D24S8 when Sunset mod is installed to maintain exhaust flame
         // quad rendering in Sunset's custom particle shaders, otherwise INTZ for universal modern GPUs.
@@ -203,7 +204,7 @@ namespace ShadowFix {
         }
 
         // 4. Force Sharp Shadows (Stencil technique override on INTZ/DF16/DF24)
-        if (forceSharpShadows != 0) {
+        if (!g_Config.X360StuffInstalled && forceSharpShadows != 0) {
             // sub eax, 3 -> sub eax, 2
             MemoryTools::Write<uint8_t>(ADDR_FORCE_SHARP_SUB + 2, 2);
         }

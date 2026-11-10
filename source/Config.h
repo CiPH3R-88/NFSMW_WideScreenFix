@@ -42,6 +42,7 @@ struct Settings {
     int SkipIntro = 0;
     int SimRate = 0; // 0 = Off, 1 = On (200 Hz Decoupled Physics)
     int WriteSettingsToFile = 0;
+    int WinCursor = 0; // 0 = Off (default, block Windows cursor), 1 = On (allow Windows cursor)
     std::string CustomUserFilesDirectoryInGameDir = "";
 
     std::filesystem::path IniPath;
@@ -99,18 +100,20 @@ struct Settings {
         NOSTrailPositionScalar = static_cast<float>(atof(nosPosBuf));
         if (NOSTrailPositionScalar < 0.0f) NOSTrailPositionScalar = 0.0f;
 
-        // Toru's X360Stuff already applies HUD aspect correction and
-        // widescreen placement.  Do not stack our HUD transforms on top.
+        // Toru's X360Stuff applies HUD aspect correction, widescreen placement,
+        // and entirely replaces the shadow map rendering pipeline.
         X360StuffInstalled = std::filesystem::exists(GamePath / "scripts" / "X360Stuff.asi");
 
         // Sunset mod provides its own in-game Motion Blur video option and custom particle shaders.
-        SunSetInstalled = std::filesystem::exists(GamePath / "scripts" / "SunSet.asi") ||
-                          std::filesystem::exists(GamePath / "SunSet.asi") ||
-                          (GetModuleHandleA("SunSet.asi") != NULL);
+        SunSetInstalled = std::filesystem::exists(GamePath / "scripts" / "SunSet.asi");
 
         SkipIntro = GetPrivateProfileIntA("MISC", "SkipIntro", 0, iniStr.c_str());
         SimRate = GetPrivateProfileIntA("MISC", "SimRate", 0, iniStr.c_str());
         WriteSettingsToFile = GetPrivateProfileIntA("MISC", "WriteSettingsToFile", 0, iniStr.c_str());
+        WinCursor = GetPrivateProfileIntA("MISC", "WinCursor", 0, iniStr.c_str());
+        if (!WinCursor) {
+            WinCursor = GetPrivateProfileIntA("MISC", "Win Cursor", 0, iniStr.c_str());
+        }
 
         char userDirBuf[MAX_PATH] = { 0 };
         GetPrivateProfileStringA("MISC", "CustomUserFilesDirectoryInGameDir", "0", userDirBuf, MAX_PATH, iniStr.c_str());

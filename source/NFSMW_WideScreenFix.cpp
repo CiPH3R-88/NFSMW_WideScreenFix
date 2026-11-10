@@ -60,6 +60,9 @@ static void InitializeMod() {
     // splash package name when explicitly enabled.
     HudFix::InitWideScreenSplash(g_Config.WS_MWSPLASHBACK != 0);
 
+    // 7. Windows Cursor Toggle (0 = Default in-game cursor, blocks Windows cursor | 1 = Windows OS cursor)
+    HudFix::InitWinCursor(g_Config.WinCursor);
+
     // 8. High-Precision SimRate (200 Hz Decoupled Physics)
     if (g_Config.SimRate != 0) {
         SimRate::Init(true, g_Config.SimRate);
