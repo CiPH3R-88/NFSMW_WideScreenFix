@@ -15,10 +15,10 @@ namespace MovieFix {
 
     // Verified from IDA: sub_7F996A (0x007F996A) - YUV420 to RGB Lookup Tables
     // Tables consumed by MMX video rasterizer (sub_7F91BD).
-    constexpr uintptr_t ADDR_Y_TABLE        = 0x00908648; // Y table (256 * 8 bytes)
-    constexpr uintptr_t ADDR_U_TABLE        = 0x00908E48; // U table (256 * 8 bytes)
-    constexpr uintptr_t ADDR_V_TABLE        = 0x00909648; // V table (256 * 8 bytes)
-    constexpr uintptr_t ADDR_CALC_YUV_LUT   = 0x007F996A; // sub_7F996A entry point
+    constexpr uintptr_t ADDR_Y_TABLE = 0x00908648; // Y table (256 * 8 bytes)
+    constexpr uintptr_t ADDR_U_TABLE = 0x00908E48; // U table (256 * 8 bytes)
+    constexpr uintptr_t ADDR_V_TABLE = 0x00909648; // V table (256 * 8 bytes)
+    constexpr uintptr_t ADDR_CALC_YUV_LUT = 0x007F996A; // sub_7F996A entry point
     constexpr uintptr_t ADDR_FLAG_YUV_RESET = 0x009BFE18; // Reset flag at end of sub_7F996A
 
     // Full color range (0-255) LUT calculation from Toru
@@ -58,14 +58,12 @@ namespace MovieFix {
     }
 
     inline void Init(int mode, bool x360StuffInstalled = false) {
-        if (!x360StuffInstalled) {
-            // Hook YUV LUT generator (sub_7F996A) to generate full-color range tables (0-255)
-            // instead of vanilla limited range (16-235).
-            MemoryTools::MakeJMP(ADDR_CALC_YUV_LUT, reinterpret_cast<uintptr_t>(Hooked_CalcYuvLut));
+        // Hook YUV LUT generator (sub_7F996A) to generate full-color range tables (0-255)
+        // instead of vanilla limited range (16-235).
+        MemoryTools::MakeJMP(ADDR_CALC_YUV_LUT, reinterpret_cast<uintptr_t>(Hooked_CalcYuvLut));
 
-            // Pre-calculate tables right away
-            Hooked_CalcYuvLut();
-        }
+        // Pre-calculate tables right away
+        Hooked_CalcYuvLut();
 
         if (mode <= 0 || x360StuffInstalled) return;
 
@@ -74,14 +72,15 @@ namespace MovieFix {
 
         if (mode == 1) {
             // Mode 1: Fill 16:9 screen (zoom/crop letterbox)
-            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_Y2,  kScaled);
-            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_X2,  kScaled);
+            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_Y2, kScaled);
+            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_X2, kScaled);
             MemoryTools::Write<float>(ADDR_MOVIE_QUAD_Y1, -kScaled);
             MemoryTools::Write<float>(ADDR_MOVIE_QUAD_X1, -kScaled);
-        } else if (mode == 2) {
+        }
+        else if (mode == 2) {
             // Mode 2: Aspect ratio correct (preserve height, scale width to prevent stretch)
-            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_Y2,  0.5f);
-            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_X2,  kScaled);
+            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_Y2, 0.5f);
+            MemoryTools::Write<float>(ADDR_MOVIE_QUAD_X2, kScaled);
             MemoryTools::Write<float>(ADDR_MOVIE_QUAD_Y1, -0.5f);
             MemoryTools::Write<float>(ADDR_MOVIE_QUAD_X1, -kScaled);
         }
