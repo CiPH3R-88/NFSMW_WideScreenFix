@@ -12,60 +12,62 @@ namespace ShadowFix {
     // Verified from IDA: Shadow rendering pipeline (sub_6DE300, sub_6C8770, sub_6C1510)
 
     // --- Dynamic Shadow Tunnel / Bridge Fix (0x006DE300 & 0x00744468) ---
-    constexpr uintptr_t ADDR_SHADOW_FADE_JNZ     = 0x006DE377; // 2 bytes: 75 3B -> NOP
-    constexpr uintptr_t ADDR_SHADOW_FADE_FLOAT   = 0x006DE37F; // Immediate float 1.0f -> 0.0f
-    constexpr uintptr_t ADDR_CAR_SHADOW_OPACITY  = 0x008A0E50; // Dynamic car ambient shadow opacity (110.0f -> 60.0f)
+    constexpr uintptr_t ADDR_SHADOW_FADE_JNZ = 0x006DE377; // 2 bytes: 75 3B -> NOP
+    constexpr uintptr_t ADDR_SHADOW_FADE_FLOAT = 0x006DE37F; // Immediate float 1.0f -> 0.0f
+    constexpr uintptr_t ADDR_CAR_SHADOW_OPACITY = 0x008A0E50; // Dynamic car ambient shadow opacity (110.0f -> 60.0f)
 
     // --- Dynamic Shadow Resolution Texture Operands (sub_6C8770) ---
     // Width (X) operands
-    constexpr uintptr_t ADDR_SHADOW_RES_X_MOV    = 0x006C86B1; // mov eax, Width (operand at 0x6C86B0 + 1)
-    constexpr uintptr_t ADDR_SHADOW_RES_X_PUSH1  = 0x006C878C; // push Width (operand at 0x6C878B + 1)
-    constexpr uintptr_t ADDR_SHADOW_RES_X_PUSH2  = 0x006C87BE; // push Width (operand at 0x6C87BD + 1)
-    constexpr uintptr_t ADDR_SHADOW_RES_X_PUSH3  = 0x006C87F4; // push Width (operand at 0x6C87F3 + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_X_MOV = 0x006C86B1; // mov eax, Width (operand at 0x6C86B0 + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_X_PUSH1 = 0x006C878C; // push Width (operand at 0x6C878B + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_X_PUSH2 = 0x006C87BE; // push Width (operand at 0x6C87BD + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_X_PUSH3 = 0x006C87F4; // push Width (operand at 0x6C87F3 + 1)
 
     // Height (Y) operands
-    constexpr uintptr_t ADDR_SHADOW_RES_Y_MOV    = 0x006C86C1; // mov eax, Height (operand at 0x6C86C0 + 1)
-    constexpr uintptr_t ADDR_SHADOW_RES_Y_PUSH1  = 0x006C8787; // push Height (operand at 0x6C8786 + 1)
-    constexpr uintptr_t ADDR_SHADOW_RES_Y_PUSH2  = 0x006C87B9; // push Height (operand at 0x6C87B8 + 1)
-    constexpr uintptr_t ADDR_SHADOW_RES_Y_PUSH3  = 0x006C87EF; // push Height (operand at 0x6C87EE + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_Y_MOV = 0x006C86C1; // mov eax, Height (operand at 0x6C86C0 + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_Y_PUSH1 = 0x006C8787; // push Height (operand at 0x6C8786 + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_Y_PUSH2 = 0x006C87B9; // push Height (operand at 0x6C87B8 + 1)
+    constexpr uintptr_t ADDR_SHADOW_RES_Y_PUSH3 = 0x006C87EF; // push Height (operand at 0x6C87EE + 1)
 
     // --- Depth Bias & Slope Scaled Bias (sub_6E54E0) ---
-    constexpr uintptr_t ADDR_DEPTH_BIAS_INST     = 0x006E54E1; // fild dword_901AC0 (6 bytes: DB 05 C0 1A 90 00)
-    constexpr uintptr_t ADDR_DEPTH_BIAS_SLOPE    = 0x006E5507; // mov edx, dword_901ABC (6 bytes: 8B 15 BC 1A 90 00)
-    constexpr uintptr_t ADDR_VANILLA_DEPTH_BIAS  = 0x00901AC0; // int32_t vanilla depth bias (4)
+    constexpr uintptr_t ADDR_DEPTH_BIAS_INST = 0x006E54E1; // fild dword_901AC0 (6 bytes: DB 05 C0 1A 90 00)
+    constexpr uintptr_t ADDR_DEPTH_BIAS_SLOPE = 0x006E5507; // mov edx, dword_901ABC (6 bytes: 8B 15 BC 1A 90 00)
+    constexpr uintptr_t ADDR_VANILLA_DEPTH_BIAS = 0x00901AC0; // int32_t vanilla depth bias (4)
     constexpr uintptr_t ADDR_VANILLA_DEPTH_SLOPE = 0x00901ABC; // float vanilla depth bias slope (4.0f)
 
     // --- Shadow Level of Detail (LOD) Enhancements ---
-    constexpr uintptr_t ADDR_SHADOW_LOD_CULL     = 0x006E5174; // push 200h (LOD culling flag) -> push 0
-    constexpr uintptr_t ADDR_SHADOW_LOD_DETAIL   = 0x006BFFA2; // push 4100h (geometry flags) -> push 6102h
+    constexpr uintptr_t ADDR_SHADOW_LOD_CULL = 0x006E5174; // push 200h (LOD culling flag) -> push 0
+    constexpr uintptr_t ADDR_SHADOW_LOD_DETAIL = 0x006BFFA2; // push 4100h (geometry flags) -> push 6102h
 
     // --- Texture Formats (D24S8, INTZ, DF16, DF24) ---
-    constexpr uintptr_t ADDR_CREATE_FORMAT_CHECK     = 0x006C8798;
-    constexpr uintptr_t ADDR_CREATE_D24S8_BRANCH     = 0x006C87A2;
-    constexpr uintptr_t ADDR_CREATE_D24S8_PUSH       = 0x006C87B2; // push 4Bh (75 = D24S8)
-    constexpr uintptr_t ADDR_CREATE_FOURCC_BRANCH    = 0x006C87D5;
-    constexpr uintptr_t ADDR_CREATE_FOURCC_PUSH      = 0x006C87E5; // push 'DF16' (FOURCC)
+    constexpr uintptr_t ADDR_CREATE_FORMAT_CHECK = 0x006C8798;
+    constexpr uintptr_t ADDR_CREATE_D24S8_BRANCH = 0x006C87A2;
+    constexpr uintptr_t ADDR_CREATE_D24S8_PUSH = 0x006C87B2; // push 4Bh (75 = D24S8)
+    constexpr uintptr_t ADDR_CREATE_FOURCC_BRANCH = 0x006C87D5;
+    constexpr uintptr_t ADDR_CREATE_FOURCC_PUSH = 0x006C87E5; // push 'DF16' (FOURCC)
 
-    constexpr uintptr_t ADDR_CHECK_DEV_START         = 0x006C1703; // mov dword_982C08, ebx (6 bytes)
-    constexpr uintptr_t ADDR_CHECK_DEV_JNZ           = 0x006C170A; // jnz loc_6C173A in sub_6C1510 (2 bytes)
-    constexpr uintptr_t ADDR_CHECK_DEV_D24S8_PUSH    = 0x006C1719; // push 4Bh
-    constexpr uintptr_t ADDR_CHECK_DEV_SET_1         = 0x006C172C; // mov dword_982C08, 1 (10 bytes)
+    constexpr uintptr_t ADDR_CHECK_DEV_START = 0x006C1703; // mov dword_982C08, ebx (6 bytes)
+    constexpr uintptr_t ADDR_CHECK_DEV_JNZ = 0x006C170A; // jnz loc_6C173A in sub_6C1510 (2 bytes)
+    constexpr uintptr_t ADDR_CHECK_DEV_D24S8_PUSH = 0x006C1719; // push 4Bh
+    constexpr uintptr_t ADDR_CHECK_DEV_SET_1 = 0x006C172C; // mov dword_982C08, 1 (10 bytes)
     constexpr uintptr_t ADDR_CHECK_DEV_FOURCC_BRANCH = 0x006C1741;
-    constexpr uintptr_t ADDR_CHECK_DEV_FOURCC_PUSH   = 0x006C174E; // push 'DF16'
-    constexpr uintptr_t ADDR_CHECK_DEV_SET_2         = 0x006C1764; // mov dword_982C08, 2 (10 bytes)
-    constexpr uintptr_t ADDR_SHADOW_TYPE_GLOBAL      = 0x00982C08; // 1 = D24S8, 2 = Depth Buffer
+    constexpr uintptr_t ADDR_CHECK_DEV_FOURCC_PUSH = 0x006C174E; // push 'DF16'
+    constexpr uintptr_t ADDR_CHECK_DEV_SET_2 = 0x006C1764; // mov dword_982C08, 2 (10 bytes)
+    constexpr uintptr_t ADDR_SHADOW_TYPE_GLOBAL = 0x00982C08; // 1 = D24S8, 2 = Depth Buffer
 
     // --- Force Sharp Shadows ---
-    constexpr uintptr_t ADDR_FORCE_SHARP_SUB         = 0x006D5F3A; // sub eax, 3 -> sub eax, 2
+    constexpr uintptr_t ADDR_FORCE_SHARP_SUB = 0x006D5F3A; // sub eax, 3 -> sub eax, 2
 
     // --- GPU Vendor Override (0x0093D898) ---
-    constexpr uintptr_t ADDR_GPU_VENDOR_GLOBAL       = 0x0093D898;
+    constexpr uintptr_t ADDR_GPU_VENDOR_GLOBAL = 0x0093D898;
 
     // FourCC and enum constants
     constexpr int kFmt_D24S8 = 75;
-    constexpr int kFmt_INTZ  = 0x5A544E49; // 'INTZ'
-    constexpr int kFmt_DF16  = 0x36314644; // 'DF16'
-    constexpr int kFmt_DF24  = 0x34324644; // 'DF24'
+    constexpr int kFmt_INTZ = 0x5A544E49; // 'INTZ'
+    constexpr int kFmt_DF16 = 0x36314644; // 'DF16'
+    constexpr int kFmt_DF24 = 0x34324644; // 'DF24'
+
+    inline bool s_BypassForX360Stuff = false; // Set to false to disable the X360Stuff.asi bypass for testing
 
     inline uint32_t s_ForcedGPUVendor = 0;
 
@@ -97,13 +99,13 @@ namespace ShadowFix {
         if (resX > 16384) resX = 16384;
 
         // Patch Width (X) operands
-        MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_X_MOV,   resX);
+        MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_X_MOV, resX);
         MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_X_PUSH1, resX);
         MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_X_PUSH2, resX);
         MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_X_PUSH3, resX);
 
         // Patch Height (Y) operands
-        MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_Y_MOV,   resY);
+        MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_Y_MOV, resY);
         MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_Y_PUSH1, resY);
         MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_Y_PUSH2, resY);
         MemoryTools::Write<uint32_t>(ADDR_SHADOW_RES_Y_PUSH3, resY);
@@ -114,10 +116,12 @@ namespace ShadowFix {
         if (s_ActiveMode == 2 && !s_ForceSharpShadows) {
             s_DepthBias = static_cast<float>(MemoryTools::Read<int32_t>(ADDR_VANILLA_DEPTH_BIAS)) * (static_cast<float>(resval) / 1024.0f);
             s_DepthBiasSlope = MemoryTools::Read<float>(ADDR_VANILLA_DEPTH_SLOPE) * (static_cast<float>(resval) / 1024.0f);
-        } else if (resval > 3072) {
+        }
+        else if (resval > 3072) {
             s_DepthBias = static_cast<float>(MemoryTools::Read<int32_t>(ADDR_VANILLA_DEPTH_BIAS)) * (static_cast<float>(resval) / 3072.0f);
             s_DepthBiasSlope = MemoryTools::Read<float>(ADDR_VANILLA_DEPTH_SLOPE) * (static_cast<float>(resval) / 3072.0f);
-        } else {
+        }
+        else {
             s_DepthBias = static_cast<float>(MemoryTools::Read<int32_t>(ADDR_VANILLA_DEPTH_BIAS));
             s_DepthBiasSlope = MemoryTools::Read<float>(ADDR_VANILLA_DEPTH_SLOPE);
         }
@@ -155,9 +159,13 @@ namespace ShadowFix {
         }
     }
 
+    inline bool ShouldBypassForX360Stuff() {
+        return s_BypassForX360Stuff && g_Config.X360StuffInstalled;
+    }
+
     inline void ApplyTextureFormat(int formatOption) {
         // X360Stuff entirely replaces shadow rendering; ignore format patches to prevent shadows from disappearing.
-        if (formatOption < 0 || g_Config.X360StuffInstalled) return;
+        if (formatOption < 0 || ShouldBypassForX360Stuff()) return;
 
         // 0 = D24S8, 1 = INTZ, 2 = DF16, 3 = DF24
         static constexpr uint32_t kFormats[] = { kFmt_D24S8, kFmt_INTZ, kFmt_DF16, kFmt_DF24 };
@@ -181,7 +189,8 @@ namespace ShadowFix {
 
             *reinterpret_cast<uint32_t*>(ADDR_SHADOW_TYPE_GLOBAL) = 1;
             s_ActiveMode = 1;
-        } else {
+        }
+        else {
             // FOURCC format (INTZ, DF16, DF24 - Depth Buffer as Texture, soft)
             MemoryTools::MakeJMP(ADDR_CREATE_FORMAT_CHECK, ADDR_CREATE_FOURCC_BRANCH);
             MemoryTools::Write<uint32_t>(ADDR_CREATE_FOURCC_PUSH + 1, chosenFormat);
@@ -232,7 +241,7 @@ namespace ShadowFix {
         }
 
         // 4. Force Sharp Shadows (Stencil technique override on INTZ/DF16/DF24)
-        if (!g_Config.X360StuffInstalled && forceSharpShadows != 0) {
+        if (!ShouldBypassForX360Stuff() && forceSharpShadows != 0) {
             // sub eax, 3 -> sub eax, 2
             MemoryTools::Write<uint8_t>(ADDR_FORCE_SHARP_SUB + 2, 2);
         }
