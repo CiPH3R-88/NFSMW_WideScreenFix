@@ -43,7 +43,7 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 
 ## Installation
 
-1. Copy `NFSMW_WideScreenFix.asi` and `NFSMW_WideScreenFix.ini` into your game's `scripts/` folder (requires an ASI Loader like `dinput8.dll`).
+1. Copy `NFSMW_WideScreenFix.asi` and `NFSMW_WideScreenFix.ini` into your game's `scripts/` folder (requires an ASI Loader - [`dinput8.dll`](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases)).
 2. Configure settings inside `NFSMW_WideScreenFix.ini` to your preference.
 
 ---
