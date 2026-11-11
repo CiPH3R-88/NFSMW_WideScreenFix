@@ -68,7 +68,8 @@ static void InitializeMod() {
         SimRate::Init(true, g_Config.SimRate);
     }
 
-    // 9. Dynamic Shadows System (ShadowsRes, ShadowsFix, LOD, Formats)
+    // 9. GPU Vendor Override & Dynamic Shadows System
+    ShadowFix::ApplyGPUVendor(g_Config.GPUVendor);
     ShadowFix::Init(
         g_Config.ShadowsRes,
         g_Config.ShadowsFix,

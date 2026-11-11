@@ -14,6 +14,7 @@ struct Settings {
 
     // GRAPHICS
     int MotionBlur = 1; // 0 = Off, 1 = On
+    int GPUVendor = 1;  // 0 = Off, 1 = Nvidia (0x10DE), 2 = AMD (0x1002), 3 = Intel (0x8086)
 
     // HUD
     int FixHUD = 1;
@@ -70,6 +71,7 @@ struct Settings {
         }
 
         MotionBlur = GetPrivateProfileIntA("GRAPHICS", "MotionBlur", 1, iniStr.c_str());
+        GPUVendor = GetPrivateProfileIntA("GRAPHICS", "GPUVendor", 1, iniStr.c_str());
         FixHUD = GetPrivateProfileIntA("HUD", "FixHUD", 1, iniStr.c_str());
         WideScreenHUD = GetPrivateProfileIntA("HUD", "WideScreenHUD", 0, iniStr.c_str());
         WS_MWSPLASHBACK = GetPrivateProfileIntA("HUD", "WS_MWSPLASHBACK", 0, iniStr.c_str());

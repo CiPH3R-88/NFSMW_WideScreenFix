@@ -58,15 +58,20 @@ namespace ShadowFix {
     // --- Force Sharp Shadows ---
     constexpr uintptr_t ADDR_FORCE_SHARP_SUB         = 0x006D5F3A; // sub eax, 3 -> sub eax, 2
 
+    // --- GPU Vendor Override (0x0093D898) ---
+    constexpr uintptr_t ADDR_GPU_VENDOR_GLOBAL       = 0x0093D898;
+
     // FourCC and enum constants
     constexpr int kFmt_D24S8 = 75;
     constexpr int kFmt_INTZ  = 0x5A544E49; // 'INTZ'
     constexpr int kFmt_DF16  = 0x36314644; // 'DF16'
     constexpr int kFmt_DF24  = 0x34324644; // 'DF24'
 
+    inline uint32_t s_ForcedGPUVendor = 0;
+
     inline uint32_t s_BaseResolution = 2048;
     inline bool s_AutoScale = true;
-    inline int s_ConfigFormat = 0; // 0 = Auto
+    inline int s_ConfigFormat = 0; // -1 = Disable, 0 = D24S8, 1 = INTZ, 2 = DF16, 3 = DF24
     inline bool s_ForceSharpShadows = false;
 
     inline int s_ActiveFormat = kFmt_INTZ;
@@ -124,17 +129,40 @@ namespace ShadowFix {
         UpdateShadowsRes(aspect);
     }
 
+    /**
+     * Redirects all GPUVendor (0x0093D898) reads to the configured vendor ID.
+     * Prevents GetAdapterIdentifier overwrites from dropping shadow capability checks
+     * on modern AMD drivers (DF16 removed) or Intel iGPUs (no vendor branch).
+     */
+    inline void ApplyGPUVendor(int vendorOption) {
+        static constexpr uint32_t kVendorIds[] = { 0x0000, 0x10DE, 0x1002, 0x8086 };
+        if (vendorOption <= 0 || vendorOption >= static_cast<int>(sizeof(kVendorIds) / sizeof(kVendorIds[0]))) return;
+
+        s_ForcedGPUVendor = kVendorIds[vendorOption];
+
+        static constexpr uintptr_t kVendorReadOperands[] = {
+            0x006C149B, 0x006C14DD, 0x006C15D7, 0x006C1657,
+            0x006C16D7, 0x006C16F9, 0x006C1A93, 0x006C1B67,
+            0x006C5092, 0x006C50E2, 0x006C5F04, 0x006C5F4E,
+            0x006CFDB1, 0x006CFDF6, 0x006D2101, 0x006D5C35,
+            0x006D5DDD, 0x006DF91C, 0x006DF99B, 0x006E6B6B
+        };
+
+        for (uintptr_t operandAddr : kVendorReadOperands) {
+            if (MemoryTools::Read<uintptr_t>(operandAddr) == ADDR_GPU_VENDOR_GLOBAL) {
+                MemoryTools::Write<const uint32_t*>(operandAddr, &s_ForcedGPUVendor);
+            }
+        }
+    }
+
     inline void ApplyTextureFormat(int formatOption) {
         // X360Stuff entirely replaces shadow rendering; ignore format patches to prevent shadows from disappearing.
         if (formatOption < 0 || g_Config.X360StuffInstalled) return;
 
-        // Auto (0) selects D24S8 when Sunset mod is installed to maintain exhaust flame
-        // quad rendering in Sunset's custom particle shaders, otherwise INTZ for universal modern GPUs.
-        uint32_t chosenFormat = g_Config.SunSetInstalled ? kFmt_D24S8 : kFmt_INTZ;
-        if (formatOption == 1) chosenFormat = kFmt_D24S8;
-        else if (formatOption == 2) chosenFormat = kFmt_INTZ;
-        else if (formatOption == 3) chosenFormat = kFmt_DF16;
-        else if (formatOption == 4) chosenFormat = kFmt_DF24;
+        // 0 = D24S8, 1 = INTZ, 2 = DF16, 3 = DF24
+        static constexpr uint32_t kFormats[] = { kFmt_D24S8, kFmt_INTZ, kFmt_DF16, kFmt_DF24 };
+        int index = (formatOption <= 3) ? formatOption : 3;
+        uint32_t chosenFormat = kFormats[index];
 
         s_ActiveFormat = chosenFormat;
 
