@@ -9,8 +9,8 @@
 #include <unordered_map>
 
 namespace HudFix {
-    inline bool s_BypassFixHUDForX360Stuff = false; // Set to false to disable the X360Stuff.asi FixHUD bypass for testing
-    inline bool s_BypassWideScreenHUDForX360Stuff = false; // Set to false to disable the X360Stuff.asi WideScreenHUD bypass for testing
+    inline bool s_BypassFixHUDForX360Stuff = true; // Set to false to disable the X360Stuff.asi FixHUD bypass for testing
+    inline bool s_BypassWideScreenHUDForX360Stuff = true; // Set to false to disable the X360Stuff.asi WideScreenHUD bypass for testing
 
     inline float s_HudMatrixScaleX = 1.0f;
     inline float s_HudScaleX = 0.003125f; // flt_8AF9A4 (vanilla: 2.0f / 640.0f)
