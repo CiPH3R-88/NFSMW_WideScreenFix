@@ -47,14 +47,13 @@ static void InitializeMod() {
     // 7. Motion Blur. Sunset mod owns its own Video Settings option when installed.
     if (!g_Config.SunSetInstalled) {
         Motionblur::Init(g_Config.MotionBlur != 0);
-    } else {
+    }
+    else {
         Motionblur::s_MotionBlurEnabled = false;
     }
 
-    // 6. 2D HUD. X360Stuff owns the same HUD transform when installed.
-    if (!g_Config.X360StuffInstalled) {
-        HudFix::Init(g_Config.FixHUD != 0, g_Config.WideScreenHUD != 0);
-    }
+    // 6. 2D HUD. X360Stuff owns the same HUD transform when installed (bypassed inside HudFix::Init).
+    HudFix::Init(g_Config.FixHUD != 0, g_Config.WideScreenHUD != 0);
 
     // Independent of X360Stuff detection: this only changes the loading
     // splash package name when explicitly enabled.
@@ -100,7 +99,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         if (strstr(moduleName, "speed.exe") || strstr(moduleName, "SPEED.EXE")) {
             InitializeMod();
         }
-    } else if (fdwReason == DLL_PROCESS_DETACH) {
+    }
+    else if (fdwReason == DLL_PROCESS_DETACH) {
         SimRate::Shutdown();
     }
     return TRUE;

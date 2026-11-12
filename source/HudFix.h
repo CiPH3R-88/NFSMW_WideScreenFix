@@ -9,6 +9,9 @@
 #include <unordered_map>
 
 namespace HudFix {
+    inline bool s_BypassFixHUDForX360Stuff = false; // Set to false to disable the X360Stuff.asi FixHUD bypass for testing
+    inline bool s_BypassWideScreenHUDForX360Stuff = false; // Set to false to disable the X360Stuff.asi WideScreenHUD bypass for testing
+
     inline float s_HudMatrixScaleX = 1.0f;
     inline float s_HudScaleX = 0.003125f; // flt_8AF9A4 (vanilla: 2.0f / 640.0f)
     inline float s_FEHudPosX = 320.0f;    // flt_894B40 (vanilla: 320.0f)
@@ -252,12 +255,18 @@ namespace HudFix {
         MemoryTools::Write<float>(0x005A44C8 + 4, s_FEHudPosX); // 0x005A44CC: RenderString (esp + 0x64)
     }
 
+    inline bool ShouldBypassForX360Stuff(bool bypassEnabled) {
+        return bypassEnabled && g_Config.X360StuffInstalled;
+    }
+
     inline void Init(bool fixHUD, bool wideScreenHUD) {
-        if (!fixHUD && !wideScreenHUD) return;
+        const bool applyFixHUD = fixHUD && !ShouldBypassForX360Stuff(s_BypassFixHUDForX360Stuff);
+        const bool applyWideScreenHUD = wideScreenHUD && !ShouldBypassForX360Stuff(s_BypassWideScreenHUDForX360Stuff);
+        if (!applyFixHUD && !applyWideScreenHUD) return;
 
-        s_WideScreenHUD = wideScreenHUD;
+        s_WideScreenHUD = applyWideScreenHUD;
 
-        if (fixHUD) {
+        if (applyFixHUD) {
             constexpr uintptr_t kMirrorRenderCallSite = 0x006E7199;
             if (!s_OriginalMirrorRender) {
                 s_OriginalMirrorRender = reinterpret_cast<RenderPolyFn>(
@@ -270,7 +279,7 @@ namespace HudFix {
             Resolution::RegisterOnResChange(UpdateHudScale);
         }
 
-        if (wideScreenHUD) {
+        if (applyWideScreenHUD) {
             UpdateWideScreenHUD(Resolution::g_CurrentWidth, Resolution::g_CurrentHeight);
             WideScreenHUD::UpdateOffset(Resolution::g_CurrentWidth, Resolution::g_CurrentHeight);
             WideScreenHUD::Init();

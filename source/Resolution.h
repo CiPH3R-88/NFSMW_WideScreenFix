@@ -56,6 +56,16 @@ namespace Resolution {
     inline int g_WindowMode = 0;
     inline int g_WindowModeFallback = 1;
     inline HWND g_GameHWND = NULL;
+    inline WNDPROC s_OrigWndProc = nullptr;
+
+    inline LRESULT CALLBACK Hook_WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+        if (Msg == WM_SETCURSOR && LOWORD(lParam) == HTCLIENT && g_Config.WinCursor == 0) {
+            SetCursor(NULL);
+            return TRUE;
+        }
+        return s_OrigWndProc ? CallWindowProcA(s_OrigWndProc, hWnd, Msg, wParam, lParam)
+            : DefWindowProcA(hWnd, Msg, wParam, lParam);
+    }
 
     using PFN_CreateWindowExA = HWND(WINAPI*)(DWORD, LPCSTR, LPCSTR, DWORD, int, int, int, int, HWND, HMENU, HINSTANCE, LPVOID);
     using PFN_SetWindowLongA = LONG(WINAPI*)(HWND, int, LONG);
@@ -85,11 +95,13 @@ namespace Resolution {
             if (aspect >= deskAspect) {
                 winW = deskW;
                 winH = static_cast<int>(deskW / aspect);
-            } else {
+            }
+            else {
                 winH = deskH;
                 winW = static_cast<int>(deskH * aspect);
             }
-        } else if (g_WindowMode == 5) { // Borderless Fullscreen Stretched (fills screen)
+        }
+        else if (g_WindowMode == 5) { // Borderless Fullscreen Stretched (fills screen)
             winW = deskW;
             winH = deskH;
         }
@@ -101,11 +113,13 @@ namespace Resolution {
             // Borderless / Borderless Fullscreen / Borderless Fullscreen Stretched
             style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
             style |= WS_POPUP;
-        } else if (g_WindowMode == 2) {
+        }
+        else if (g_WindowMode == 2) {
             // Border
             style |= (WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU);
             style &= ~(WS_MAXIMIZEBOX | WS_THICKFRAME);
-        } else if (g_WindowMode == 3) {
+        }
+        else if (g_WindowMode == 3) {
             // Resizable Border
             style |= (WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_MAXIMIZEBOX | WS_THICKFRAME);
         }
@@ -154,11 +168,13 @@ namespace Resolution {
             if (aspect >= deskAspect) {
                 winW = deskW;
                 winH = static_cast<int>(deskW / aspect);
-            } else {
+            }
+            else {
                 winH = deskH;
                 winW = static_cast<int>(deskH * aspect);
             }
-        } else if (g_WindowMode == 5) { // Borderless Fullscreen Stretched (fills screen)
+        }
+        else if (g_WindowMode == 5) { // Borderless Fullscreen Stretched (fills screen)
             winW = deskW;
             winH = deskH;
         }
@@ -173,6 +189,14 @@ namespace Resolution {
 
         if (hWnd) {
             ApplyWindowStyleAndPosition(hWnd, winW, winH);
+            if (g_Config.WinCursor == 0 && g_WindowMode > 0) {
+                WNDPROC prevProc = reinterpret_cast<WNDPROC>(
+                    s_OrigSetWindowLongA(hWnd, GWL_WNDPROC, reinterpret_cast<LONG>(Hook_WndProc)));
+                if (prevProc && prevProc != Hook_WndProc) {
+                    s_OrigWndProc = prevProc;
+                }
+                SetCursor(NULL);
+            }
         }
         return hWnd;
     }
@@ -183,10 +207,12 @@ namespace Resolution {
             if (g_WindowMode == 1 || g_WindowMode == 4 || g_WindowMode == 5) {
                 dwNewLong &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
                 dwNewLong |= WS_POPUP;
-            } else if (g_WindowMode == 2) {
+            }
+            else if (g_WindowMode == 2) {
                 dwNewLong |= (WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU);
                 dwNewLong &= ~(WS_MAXIMIZEBOX | WS_THICKFRAME);
-            } else if (g_WindowMode == 3) {
+            }
+            else if (g_WindowMode == 3) {
                 dwNewLong |= (WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_MAXIMIZEBOX | WS_THICKFRAME);
             }
         }
@@ -196,7 +222,8 @@ namespace Resolution {
     inline BOOL WINAPI Hook_AdjustWindowRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu) {
         if (g_WindowMode == 2) {
             return s_OrigAdjustWindowRect(lpRect, WS_CAPTION, bMenu);
-        } else if (g_WindowMode == 3) {
+        }
+        else if (g_WindowMode == 3) {
             return s_OrigAdjustWindowRect(lpRect, WS_CAPTION | WS_MAXIMIZEBOX | WS_THICKFRAME, bMenu);
         }
         return s_OrigAdjustWindowRect(lpRect, dwStyle, bMenu);
@@ -232,19 +259,19 @@ namespace Resolution {
             if (a.width != b.width) return a.width < b.width;
             if (a.height != b.height) return a.height < b.height;
             return a.refreshRate > b.refreshRate;
-        });
+            });
 
         // Deduplicate resolutions, preserving highest refresh rate
         auto it = std::unique(modes.begin(), modes.end(), [](const Mode& a, const Mode& b) {
             return a.width == b.width && a.height == b.height;
-        });
+            });
         modes.erase(it, modes.end());
 
         // Sort by width asc, height asc
         std::sort(modes.begin(), modes.end(), [](const Mode& a, const Mode& b) {
             if (a.width != b.width) return a.width < b.width;
             return a.height < b.height;
-        });
+            });
 
         if (modes.empty()) {
             modes.push_back({ 1920, 1080, desktopHz });
@@ -411,7 +438,8 @@ namespace Resolution {
         if (actionId == ACTION_DECREMENT) {
             delta = -1;
             changed = true;
-        } else if (actionId == ACTION_INCREMENT) {
+        }
+        else if (actionId == ACTION_INCREMENT) {
             delta = 1;
             changed = true;
         }
@@ -472,7 +500,7 @@ namespace Resolution {
             // Re-execute replaced instructions at 0x0051B818:
             // 8B 77 30: mov esi, [edi + 0x30]  (ecx0[12]: value FEString)
             // 85 F6:    test esi, esi
-            mov esi, dword ptr [edi + 0x30]
+            mov esi, dword ptr[edi + 0x30]
             test esi, esi
             ret
         }
