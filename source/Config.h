@@ -20,6 +20,7 @@ struct Settings {
     // HUD
     int FixHUD = 1;
     int WideScreenHUD = 0;
+    int SplashScreen = 0; // 0 = Auto, 1 = MW_LS_Splash (4:3), 2 = WS_MW_LS_Splash (Widescreen)
     bool X360StuffInstalled = false;
     bool SunSetInstalled = false;
 
@@ -74,6 +75,7 @@ struct Settings {
         GPUVendor = GetPrivateProfileIntA("GRAPHICS", "GPUVendor", 1, iniStr.c_str());
         FixHUD = GetPrivateProfileIntA("HUD", "FixHUD", 1, iniStr.c_str());
         WideScreenHUD = GetPrivateProfileIntA("HUD", "WideScreenHUD", 0, iniStr.c_str());
+        SplashScreen = GetPrivateProfileIntA("HUD", "SplashScreen", 0, iniStr.c_str());
 
         WideScreenMovie = GetPrivateProfileIntA("MOVIES", "WideScreenMovie", 1, iniStr.c_str());
         MovieType = GetPrivateProfileIntA("MOVIES", "MovieType", 0, iniStr.c_str());
