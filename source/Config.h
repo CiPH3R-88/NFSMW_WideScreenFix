@@ -15,16 +15,17 @@ struct Settings {
     // GRAPHICS
     int MotionBlur = 1; // 0 = Off, 1 = On
     int GPUVendor = 1;  // 0 = Off, 1 = Nvidia (0x10DE), 2 = AMD (0x1002), 3 = Intel (0x8086)
+    int SimRate = 1;    // 0 = Off | 1 = Dynamic (Matches monitor refresh rate, Default) | 2 = Fixed 200Hz | > 2 = Custom Hz
 
     // HUD
     int FixHUD = 1;
     int WideScreenHUD = 0;
-    int WS_MWSPLASHBACK = 0;
     bool X360StuffInstalled = false;
     bool SunSetInstalled = false;
 
     // MOVIES
     int WideScreenMovie = 1; // 0 = Off, 1 = Zoom/Fill 16:9, 2 = Fit with Pillarboxes
+    int MovieType = 0;       // 0 = Auto-detect, 1 = NTSC (_ntsc), 2 = PAL (_pal)
 
     // SHADOW
     int ShadowsRes = 2048;
@@ -41,7 +42,6 @@ struct Settings {
 
     // MISC
     int SkipIntro = 0;
-    int SimRate = 1; // 0 = Off | 1 = Dynamic (Matches monitor refresh rate, Default) | 2 = Fixed 200Hz | > 2 = Custom Hz
     int WriteSettingsToFile = 0;
     int WinCursor = 0; // 0 = Off (default, block Windows cursor), 1 = On (allow Windows cursor)
     std::string CustomUserFilesDirectoryInGameDir = "";
@@ -74,9 +74,9 @@ struct Settings {
         GPUVendor = GetPrivateProfileIntA("GRAPHICS", "GPUVendor", 1, iniStr.c_str());
         FixHUD = GetPrivateProfileIntA("HUD", "FixHUD", 1, iniStr.c_str());
         WideScreenHUD = GetPrivateProfileIntA("HUD", "WideScreenHUD", 0, iniStr.c_str());
-        WS_MWSPLASHBACK = GetPrivateProfileIntA("HUD", "WS_MWSPLASHBACK", 0, iniStr.c_str());
 
         WideScreenMovie = GetPrivateProfileIntA("MOVIES", "WideScreenMovie", 1, iniStr.c_str());
+        MovieType = GetPrivateProfileIntA("MOVIES", "MovieType", 0, iniStr.c_str());
 
         // SHADOW
         ShadowsRes = GetPrivateProfileIntA("SHADOW", "ShadowsRes", 2048, iniStr.c_str());
@@ -109,8 +109,14 @@ struct Settings {
         // Sunset mod provides its own in-game Motion Blur video option and custom particle shaders.
         SunSetInstalled = std::filesystem::exists(GamePath / "scripts" / "SunSet.asi");
 
-        SkipIntro = GetPrivateProfileIntA("MISC", "SkipIntro", 0, iniStr.c_str());
-        SimRate = GetPrivateProfileIntA("MISC", "SimRate", 1, iniStr.c_str());
+        SkipIntro = GetPrivateProfileIntA("MOVIES", "SkipIntro", -1, iniStr.c_str());
+        if (SkipIntro == -1) {
+            SkipIntro = GetPrivateProfileIntA("MISC", "SkipIntro", 0, iniStr.c_str());
+        }
+        SimRate = GetPrivateProfileIntA("GRAPHICS", "SimRate", -1, iniStr.c_str());
+        if (SimRate == -1) {
+            SimRate = GetPrivateProfileIntA("MISC", "SimRate", 1, iniStr.c_str());
+        }
         WriteSettingsToFile = GetPrivateProfileIntA("MISC", "WriteSettingsToFile", 0, iniStr.c_str());
         WinCursor = GetPrivateProfileIntA("MISC", "WinCursor", 0, iniStr.c_str());
         if (!WinCursor) {

@@ -39,7 +39,7 @@ static void InitializeMod() {
     }
 
     // 5. FMV / Movie Widescreen & Full Color Range. X360Stuff owns movie scaling when installed.
-    MovieFix::Init(g_Config.WideScreenMovie, g_Config.X360StuffInstalled);
+    MovieFix::Init(g_Config.WideScreenMovie, g_Config.MovieType, g_Config.GamePath, g_Config.X360StuffInstalled);
 
     // 6. 3D Camera Field of View (Hor+ Projection)
     CameraFOV::Init();
@@ -47,17 +47,15 @@ static void InitializeMod() {
     // 7. Motion Blur. Sunset mod owns its own Video Settings option when installed.
     if (!g_Config.SunSetInstalled) {
         Motionblur::Init(g_Config.MotionBlur != 0);
-    }
-    else {
+    } else {
         Motionblur::s_MotionBlurEnabled = false;
     }
 
     // 6. 2D HUD. X360Stuff owns the same HUD transform when installed (bypassed inside HudFix::Init).
     HudFix::Init(g_Config.FixHUD != 0, g_Config.WideScreenHUD != 0);
 
-    // Independent of X360Stuff detection: this only changes the loading
-    // splash package name when explicitly enabled.
-    HudFix::InitWideScreenSplash(g_Config.WS_MWSPLASHBACK != 0);
+    // Dynamic widescreen loading splash (WS_MW_LS_Splash.fng for 16:9/21:9, MW_LS_Splash.fng for 16:10/4:3 with X360Stuff)
+    HudFix::InitWideScreenSplash();
 
     // 7. Windows Cursor Toggle (0 = Default in-game cursor, blocks Windows cursor | 1 = Windows OS cursor)
     HudFix::InitWinCursor(g_Config.WinCursor);
@@ -99,8 +97,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         if (strstr(moduleName, "speed.exe") || strstr(moduleName, "SPEED.EXE")) {
             InitializeMod();
         }
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH) {
+    } else if (fdwReason == DLL_PROCESS_DETACH) {
         SimRate::Shutdown();
     }
     return TRUE;

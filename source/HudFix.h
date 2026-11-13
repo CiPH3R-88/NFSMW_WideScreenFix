@@ -9,7 +9,7 @@
 #include <unordered_map>
 
 namespace HudFix {
-    inline bool s_BypassFixHUDForX360Stuff = true; // Set to false to disable the X360Stuff.asi FixHUD bypass for testing
+    inline bool s_BypassFixHUDForX360Stuff        = true;  // Automatically bypass FixHUD matrix scaling when X360Stuff is installed (X360Stuff manages 2D FE transforms)
     inline bool s_BypassWideScreenHUDForX360Stuff = true; // Set to false to disable the X360Stuff.asi WideScreenHUD bypass for testing
 
     inline float s_HudMatrixScaleX = 1.0f;
@@ -17,21 +17,55 @@ namespace HudFix {
     inline float s_FEHudPosX = 320.0f;    // flt_894B40 (vanilla: 320.0f)
 
     // Verified from IDA: SplashScreen::SplashScreen (0x005A3030) and package string at 0x008A0114
-    inline void InitWideScreenSplash(bool enabled) {
-        if (!enabled) return;
+    inline bool s_WidescreenSplashActive = false;
 
-        // 1. NOP the jz short loc_5A30A2 at 0x005A3080 in SplashScreen::SplashScreen
-        MemoryTools::MakeNOP(0x005A3080, 2);
+    inline void SetWideScreenSplashState(bool enable) {
+        if (enable == s_WidescreenSplashActive) return;
+        s_WidescreenSplashActive = enable;
 
-        // 2. Overwrite the package name in .rdata at 0x008A0114
-        constexpr char kwsSplashName[] = "WS_MW_LS_Splash.fng";
-        MemoryTools::WriteBytes(0x008A0114, kwsSplashName, sizeof(kwsSplashName));
+        if (enable) {
+            // 1. NOP the jz short loc_5A30A2 at 0x005A3080 in SplashScreen::SplashScreen
+            MemoryTools::MakeNOP(0x005A3080, 2);
 
-        // 3. Set prompt text hash to "CLICK to continue" (PC) at 0x005A313D
-        MemoryTools::Write<uint32_t>(0x005A313D, 0xC4DF3FF2);
+            // 2. Overwrite the package name in .rdata at 0x008A0114
+            constexpr char kwsSplashName[] = "WS_MW_LS_Splash.fng";
+            MemoryTools::WriteBytes(0x008A0114, kwsSplashName, sizeof(kwsSplashName));
 
-        // 4. Force GetSplashScreenPackageName() to return widescreen splash
-        MemoryTools::Write<uint8_t>(0x005705EC, 0xEB);
+            // 3. Set prompt text hash to "CLICK to continue" (PC) at 0x005A313D
+            MemoryTools::Write<uint32_t>(0x005A313D, 0xC4DF3FF2);
+
+            // 4. Force GetSplashScreenPackageName() to return widescreen splash
+            MemoryTools::Write<uint8_t>(0x005705EC, 0xEB);
+        } else {
+            // Restore original 4:3 splash behavior
+            constexpr uint8_t kOrigJz[2] = { 0x74, 0x20 };
+            MemoryTools::WriteBytes(0x005A3080, kOrigJz, sizeof(kOrigJz));
+
+            constexpr char kOrigSplashName[] = "MW_LS_Splash.fng\0\0\0";
+            MemoryTools::WriteBytes(0x008A0114, kOrigSplashName, sizeof(kOrigSplashName));
+
+            MemoryTools::Write<uint32_t>(0x005A313D, 0x3E54A15A);
+
+            MemoryTools::Write<uint8_t>(0x005705EC, 0x74);
+        }
+    }
+
+    inline void UpdateWideScreenSplash(int width, int height) {
+        if (width <= 0 || height <= 0) return;
+        float aspect = static_cast<float>(width) / static_cast<float>(height);
+
+        // When X360Stuff is installed, its internal threshold is FEScale (0.92) * (16/9) ~= 1.635f.
+        // Aspect ratios below 1.635f (16:10, 4:3, 5:4) are treated as 4:3 SD by X360Stuff,
+        // so we must preserve the 4:3 splash to prevent the title screen animation/input freeze.
+        // On 16:9, 21:9, and 32:9 (aspect >= 1.635f), WS_MW_LS_Splash.fng is safely used.
+        // Without X360Stuff, any widescreen aspect ratio (aspect >= 1.34f) uses WS_MW_LS_Splash.fng.
+        float threshold = g_Config.X360StuffInstalled ? 1.635f : 1.34f;
+        SetWideScreenSplashState(aspect >= threshold);
+    }
+
+    inline void InitWideScreenSplash() {
+        UpdateWideScreenSplash(Resolution::g_CurrentWidth, Resolution::g_CurrentHeight);
+        Resolution::RegisterOnResChange(UpdateWideScreenSplash);
     }
 
     inline bool s_WideScreenHUD = false;
@@ -39,18 +73,18 @@ namespace HudFix {
 
     namespace WideScreenHUD {
         // Native FEng Engine API functions in speed.exe
-        using FEngFindObjectFn = void* (__cdecl*)(const char* packageName, unsigned int objectHash);
-        using FEngGetCenterFn = void(__cdecl*)(void* object, float* outX, float* outY);
-        using FEngSetCenterFn = void(__cdecl*)(void* object, float x, float y);
+        using FEngFindObjectFn = void*(__cdecl*)(const char* packageName, unsigned int objectHash);
+        using FEngGetCenterFn  = void(__cdecl*)(void* object, float* outX, float* outY);
+        using FEngSetCenterFn  = void(__cdecl*)(void* object, float x, float y);
         using QueuePackageMessageFn = void(__fastcall*)(void* instance, void* edx, int messageHash, const char* packageName, int a4);
-        using SetWideScreenModeFn = char(__thiscall*)(void* instance);
+        using SetWideScreenModeFn   = char(__thiscall*)(void* instance);
 
         inline const auto FEngFindObject = reinterpret_cast<FEngFindObjectFn>(0x00524850);
-        inline const auto FEngGetCenter = reinterpret_cast<FEngGetCenterFn>(0x00524EE0);
-        inline const auto FEngSetCenter = reinterpret_cast<FEngSetCenterFn>(0x00525050);
+        inline const auto FEngGetCenter  = reinterpret_cast<FEngGetCenterFn>(0x00524EE0);
+        inline const auto FEngSetCenter  = reinterpret_cast<FEngSetCenterFn>(0x00525050);
 
         inline QueuePackageMessageFn s_OriginalQueuePackageMessage = nullptr;
-        inline SetWideScreenModeFn   s_OriginalSetWideScreenMode = nullptr;
+        inline SetWideScreenModeFn   s_OriginalSetWideScreenMode   = nullptr;
 
         inline std::unordered_map<void*, std::pair<float, float>> s_OriginalCenters;
 
@@ -65,10 +99,10 @@ namespace HudFix {
         inline void ApplyGroupOffset(const char* packageName) {
             if (!packageName) return;
 
-            constexpr unsigned int LEFT_GROUP = 0x1603009E; // Minimap group
+            constexpr unsigned int LEFT_GROUP  = 0x1603009E; // Minimap group
             constexpr unsigned int RIGHT_GROUP = 0x5D0101F1; // Tachometer / Speedometer group
 
-            void* left = FEngFindObject(packageName, LEFT_GROUP);
+            void* left  = FEngFindObject(packageName, LEFT_GROUP);
             void* right = FEngFindObject(packageName, RIGHT_GROUP);
 
             auto move = [](void* object, float delta) {
@@ -80,7 +114,7 @@ namespace HudFix {
                     it = s_OriginalCenters.emplace(object, std::make_pair(x, y)).first;
                 }
                 FEngSetCenter(object, it->second.first + delta, it->second.second);
-                };
+            };
 
             move(left, -s_WideScreenHUDOffset);
             move(right, s_WideScreenHUDOffset);
@@ -221,9 +255,9 @@ namespace HudFix {
             // With widescreen projection scale (s_HudScaleX) active, centering the quad around s_FEHudPosX
             // places the mirror in the top-center with correct 1:1 aspect ratio.
             constexpr float halfWidth = 130.0f;
-            v[4] = s_FEHudPosX - halfWidth;
-            v[8] = s_FEHudPosX - halfWidth;
-            v[0] = s_FEHudPosX + halfWidth;
+            v[4]  = s_FEHudPosX - halfWidth;
+            v[8]  = s_FEHudPosX - halfWidth;
+            v[0]  = s_FEHudPosX + halfWidth;
             v[12] = s_FEHudPosX + halfWidth;
         }
         return s_OriginalMirrorRender ? s_OriginalMirrorRender(poly, textureInfo, flags) : 0;
@@ -260,7 +294,7 @@ namespace HudFix {
     }
 
     inline void Init(bool fixHUD, bool wideScreenHUD) {
-        const bool applyFixHUD = fixHUD && !ShouldBypassForX360Stuff(s_BypassFixHUDForX360Stuff);
+        const bool applyFixHUD        = fixHUD && !ShouldBypassForX360Stuff(s_BypassFixHUDForX360Stuff);
         const bool applyWideScreenHUD = wideScreenHUD && !ShouldBypassForX360Stuff(s_BypassWideScreenHUDForX360Stuff);
         if (!applyFixHUD && !applyWideScreenHUD) return;
 
@@ -290,8 +324,8 @@ namespace HudFix {
 
     // --- Windows Cursor Toggle ---
     // Verified from IDA: sub_516F70 (0x00516F70) cursor frame update and dword_8F374C (cursor active flag)
-    constexpr uintptr_t ADDR_MOUSE_ACTIVE = 0x008F374C;
-    constexpr uintptr_t ADDR_CURSOR_CALLSITE = 0x006E71D0; // call sub_516F70 in sub_6E6E40
+    constexpr uintptr_t ADDR_MOUSE_ACTIVE     = 0x008F374C;
+    constexpr uintptr_t ADDR_CURSOR_CALLSITE  = 0x006E71D0; // call sub_516F70 in sub_6E6E40
     constexpr uintptr_t ADDR_DRAW_CURSOR_FUNC = 0x0056FDB0; // sub_56FDB0 (software cursor draw)
 
     using CursorUpdateFn = void(__cdecl*)();
@@ -304,8 +338,7 @@ namespace HudFix {
             if (visible && !isCurrentlyVisible) {
                 while (ShowCursor(TRUE) < 0) {}
                 SetCursor(LoadCursorA(NULL, IDC_ARROW));
-            }
-            else if (!visible && isCurrentlyVisible) {
+            } else if (!visible && isCurrentlyVisible) {
                 while (ShowCursor(FALSE) >= 0) {}
                 SetCursor(NULL);
             }
@@ -318,8 +351,7 @@ namespace HudFix {
         if (g_Config.WinCursor != 0) {
             // Win Cursor = 1: Show Windows OS cursor in menus, hide during gameplay
             SetWinCursorVisible(isMenuCursorActive);
-        }
-        else {
+        } else {
             // Win Cursor = 0 (Default): Block/hide Windows cursor
             SetWinCursorVisible(false);
         }
