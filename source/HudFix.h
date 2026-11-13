@@ -51,29 +51,55 @@ namespace HudFix {
         }
     }
 
-    inline void UpdateWideScreenSplash(int width, int height) {
-        if (width <= 0 || height <= 0) return;
-        float aspect = static_cast<float>(width) / static_cast<float>(height);
+    // eIsWidescreen (0x004FB000)
+    // On vanilla PC speed.exe, this function is a dummy stub (xor al, al; retn) that always returns false (0x31 0xC0 0xC3).
+    // UI mods hook this address to dynamically report whether widescreen HUD/aspect is active.
+    constexpr uintptr_t ADDR_E_IS_WIDESCREEN = 0x004FB000;
 
-        // When X360Stuff is installed, always enforce Auto mode (threshold 1.635f)
-        // to prevent title screen animation/input freezes on 16:10, 4:3, and 5:4.
-        if (g_Config.X360StuffInstalled) {
-            SetWideScreenSplashState(aspect >= 1.635f);
+    inline bool Is_eIsWidescreenHooked() {
+        uint8_t op = *reinterpret_cast<const uint8_t*>(ADDR_E_IS_WIDESCREEN);
+        return (op == 0xE9 || op == 0xFF || op == 0xEB || op == 0xE8);
+    }
+
+    inline bool Call_eIsWidescreen() {
+        auto fn = reinterpret_cast<bool(__cdecl*)()>(ADDR_E_IS_WIDESCREEN);
+        return fn ? fn() : false;
+    }
+
+    inline void UpdateWideScreenSplash(int width, int height) {
+        // 1. Manual user overrides from .ini
+        if (g_Config.SplashScreen == 1) {
+            SetWideScreenSplashState(false);
+            return;
+        }
+        if (g_Config.SplashScreen == 2) {
+            SetWideScreenSplashState(true);
             return;
         }
 
-        // For users without X360Stuff, honor the SplashScreen setting:
-        // 0 = Auto (aspect >= 1.34f -> Widescreen, else 4:3)
-        // 1 = Force MW_LS_Splash.fng (4:3)
-        // 2 = Force WS_MW_LS_Splash.fng (Widescreen)
-        if (g_Config.SplashScreen == 1) {
-            SetWideScreenSplashState(false);
-        }
-        else if (g_Config.SplashScreen == 2) {
-            SetWideScreenSplashState(true);
+        // 2. Auto mode (SplashScreen == 0):
+        // If an external mod has hooked eIsWidescreen (0x004FB000), query its dynamic return value directly.
+        // Otherwise on vanilla game (unhooked stub), detect from the screen resolution aspect ratio.
+        if (Is_eIsWidescreenHooked()) {
+            SetWideScreenSplashState(Call_eIsWidescreen());
         }
         else {
-            SetWideScreenSplashState(aspect >= 1.34f);
+            int w = width;
+            int h = height;
+            if (w <= 0 || h <= 0) {
+                w = Resolution::g_CurrentWidth;
+                h = Resolution::g_CurrentHeight;
+            }
+            if (w <= 0 || h <= 0) {
+                w = g_Config.ResX > 0 ? g_Config.ResX : GetSystemMetrics(SM_CXSCREEN);
+                h = g_Config.ResY > 0 ? g_Config.ResY : GetSystemMetrics(SM_CYSCREEN);
+            }
+            if (w > 0 && h > 0) {
+                float aspect = static_cast<float>(w) / static_cast<float>(h);
+                // 16:9 (~1.777f) and 21:9 (~2.333f+) use WS_MW_LS_Splash.fng
+                // Standard ratios (< 1.65f, like 4:3, 5:4, 16:10) use MW_LS_Splash.fng
+                SetWideScreenSplashState(aspect >= 1.65f);
+            }
         }
     }
 
