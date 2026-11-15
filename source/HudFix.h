@@ -32,9 +32,7 @@ namespace HudFix {
             MemoryTools::WriteBytes(0x008A0114, kwsSplashName, sizeof(kwsSplashName));
 
             // 3. Set prompt text hash
-            uint32_t promptHash = 0xC4DF3FF2; // "CLICK to continue" (PC)
-            if (g_Config.ControllerSupport == 1) promptHash = 0xD18D4C4C; // "Press START to begin" (Xbox)
-            else if (g_Config.ControllerSupport == 2) promptHash = 0xDC64C04C; // "Press START button" (PS)
+            constexpr uint32_t promptHash = 0xC4DF3FF2; // "CLICK to continue" (PC)
             MemoryTools::Write<uint32_t>(0x005A313D, promptHash);
 
             // 4. Force GetSplashScreenPackageName() to return widescreen splash
@@ -47,9 +45,7 @@ namespace HudFix {
             constexpr char kOrigSplashName[] = "MW_LS_Splash.fng\0\0\0";
             MemoryTools::WriteBytes(0x008A0114, kOrigSplashName, sizeof(kOrigSplashName));
 
-            uint32_t origPrompt = 0x3E54A15A;
-            if (g_Config.ControllerSupport == 1) origPrompt = 0xD18D4C4C;
-            else if (g_Config.ControllerSupport == 2) origPrompt = 0xDC64C04C;
+            constexpr uint32_t origPrompt = 0x3E54A15A;
             MemoryTools::Write<uint32_t>(0x005A313D, origPrompt);
 
             MemoryTools::Write<uint8_t>(0x005705EC, 0x74);

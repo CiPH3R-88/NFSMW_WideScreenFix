@@ -13,7 +13,6 @@
 #include "Shadowfix.h"
 #include "NOSTrailfix.h"
 #include "HighSpecAudio.h"
-#include "ControllerSupport.h"
 
 static void InitializeMod() {
     static bool s_Initialized = false;
@@ -87,14 +86,6 @@ static void InitializeMod() {
 
     // 11. High-Spec Audio (Forces 44,100 Hz CD-quality audio by default)
     HighSpecAudio::Init();
-
-    // 12. Controller Support (UI icons, analog stick deadzones, console menu navigation)
-    ControllerSupport::Init(
-        g_Config.ControllerSupport,
-        g_Config.LeftStickDeadzone,
-        g_Config.RightStickDeadzone,
-        g_Config.GamePath
-    );
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
