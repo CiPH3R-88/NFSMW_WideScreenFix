@@ -193,8 +193,7 @@ namespace UserSettings {
             DWORD dwordVal = 0;
             if (!readVal.empty()) {
                 dwordVal = static_cast<DWORD>(std::strtoul(readVal.c_str(), nullptr, 10));
-            }
-            else if (!defaultValue.empty()) {
+            } else if (!defaultValue.empty()) {
                 dwordVal = static_cast<DWORD>(std::strtoul(defaultValue.c_str(), nullptr, 10));
             }
 
@@ -214,8 +213,7 @@ namespace UserSettings {
             *reinterpret_cast<DWORD*>(lpData) = dwordVal;
             *lpcbData = required;
             return ERROR_SUCCESS;
-        }
-        else {
+        } else {
             // String (REG_SZ)
             if (lpType) *lpType = REG_SZ;
             DWORD required = static_cast<DWORD>(readVal.length() + 1);
@@ -283,8 +281,7 @@ namespace UserSettings {
                 }
             }
             valStr = std::to_string(dwVal);
-        }
-        else {
+        } else {
             valStr = reinterpret_cast<const char*>(lpData);
         }
 
@@ -299,8 +296,7 @@ namespace UserSettings {
 
         if (s_UseCustomUserDir && !s_CustomUserDir.empty()) {
             s_SettingsIniPath = s_CustomUserDir / "NFS Most Wanted" / "Settings.ini";
-        }
-        else {
+        } else {
             char szDocs[MAX_PATH] = { 0 };
             SHGetFolderPathA(NULL, CSIDL_PERSONAL | CSIDL_FLAG_CREATE, NULL, 0, szDocs);
             s_SettingsIniPath = std::filesystem::path(szDocs) / "NFS Most Wanted" / "Settings.ini";

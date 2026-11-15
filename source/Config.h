@@ -58,7 +58,13 @@ struct Settings {
         char exePath[MAX_PATH] = { 0 };
         GetModuleFileNameA(NULL, exePath, MAX_PATH);
         GamePath = std::filesystem::path(exePath).parent_path();
-        IniPath = GamePath / "scripts" / "NFSMW_WideScreenFix.ini";
+        IniPath = GamePath / "scripts" / "NFSMW_WideScreenMode.ini";
+        if (!std::filesystem::exists(IniPath)) {
+            IniPath = GamePath / "NFSMW_WideScreenMode.ini";
+        }
+        if (!std::filesystem::exists(IniPath)) {
+            IniPath = GamePath / "scripts" / "NFSMW_WideScreenFix.ini";
+        }
         if (!std::filesystem::exists(IniPath)) {
             IniPath = GamePath / "NFSMW_WideScreenFix.ini";
         }

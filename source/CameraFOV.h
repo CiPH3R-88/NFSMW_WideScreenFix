@@ -9,11 +9,11 @@
 namespace CameraFOV {
     // Engine Viewport IDs from eView::BuildProjectionMatrix (sub_6CF400)
     enum eViewID : uint32_t {
-        VIEW_MAIN = 1,
-        VIEW_SECONDARY = 2,
+        VIEW_MAIN            = 1,
+        VIEW_SECONDARY       = 2,
         VIEW_REARVIEW_MIRROR = 3,
-        VIEW_REFLECTION = 4,
-        VIEW_PIP = 5
+        VIEW_REFLECTION      = 4,
+        VIEW_PIP             = 5
     };
 
     inline float s_Hor3DScale = 1.0f;
@@ -46,8 +46,7 @@ namespace CameraFOV {
             s_HorProjectionScale = s_Hor3DScale;
             s_FovAngleMultiplier = 0.423f;
             s_VerProjectionDivisor = 1.0f;
-        }
-        else {
+        } else {
             s_HorProjectionScale = 1.0f;
             s_FovAngleMultiplier = 0.5f;
             s_VerProjectionDivisor = 1.0f;
@@ -64,33 +63,33 @@ namespace CameraFOV {
             pop edx
             pop ecx
 
-            mov eax, dword ptr[edi + 0x60] // eView->ViewportParams
+            mov eax, dword ptr [edi + 0x60] // eView->ViewportParams
 
             cmp ecx, VIEW_REARVIEW_MIRROR
             je lbl_mirror
-            fld dword ptr[s_Ver3DScale]
+            fld dword ptr [s_Ver3DScale]
             jmp lbl_ret
 
-            lbl_mirror :
-            fld dword ptr[s_MirrorScale]
+        lbl_mirror:
+            fld dword ptr [s_MirrorScale]
 
-                lbl_ret :
-                jmp dword ptr[RET_006CF4F6]
+        lbl_ret:
+            jmp dword ptr [RET_006CF4F6]
         }
     }
 
     __declspec(naked) inline void Hook_ShadowCameraMatrix1() {
         __asm {
-            fld dword ptr[s_Ver3DScale]
-            jmp dword ptr[RET_006E465A]
+            fld dword ptr [s_Ver3DScale]
+            jmp dword ptr [RET_006E465A]
         }
     }
 
     __declspec(naked) inline void Hook_ShadowCameraMatrix2() {
         __asm {
-            mov dword ptr[esp + 0x14], ecx
-            fld dword ptr[s_Ver3DScale]
-            jmp dword ptr[RET_006E47EC]
+            mov dword ptr [esp + 0x14], ecx
+            fld dword ptr [s_Ver3DScale]
+            jmp dword ptr [RET_006E47EC]
         }
     }
 

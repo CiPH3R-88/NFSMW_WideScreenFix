@@ -57,8 +57,12 @@ namespace Resolution {
     inline int g_WindowModeFallback = 1;
     inline HWND g_GameHWND = NULL;
     inline WNDPROC s_OrigWndProc = nullptr;
+    inline void (*s_OnInputActivity)() = nullptr;
 
     inline LRESULT CALLBACK Hook_WndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam) {
+        if (s_OnInputActivity && (Msg == WM_KEYDOWN || Msg == WM_SYSKEYDOWN || Msg == WM_LBUTTONDOWN || Msg == WM_RBUTTONDOWN)) {
+            s_OnInputActivity();
+        }
         if (Msg == WM_SETCURSOR && LOWORD(lParam) == HTCLIENT && g_Config.WinCursor == 0) {
             SetCursor(NULL);
             return TRUE;

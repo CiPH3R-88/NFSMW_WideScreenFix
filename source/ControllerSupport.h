@@ -488,8 +488,18 @@ namespace ControllerSupport {
         if (s_Loaded) return;
         s_Loaded = true;
 
-        const char* targetRelPath = "GLOBAL\\NFSMW_WideScreenFix.bin";
-        if (std::filesystem::exists(s_GamePath / "GLOBAL" / "NFSMW_WideScreenFix.bin")) {
+        const char* targetRelPath = "GLOBAL\\NFSMW_WideScreenMode.bin";
+        if (std::filesystem::exists(s_GamePath / "GLOBAL" / "NFSMW_WideScreenMode.bin")) {
+            targetRelPath = "GLOBAL\\NFSMW_WideScreenMode.bin";
+        } else if (std::filesystem::exists(s_GamePath / "scripts" / "NFSMW_WideScreenMode.bin")) {
+            targetRelPath = "scripts\\NFSMW_WideScreenMode.bin";
+        } else if (std::filesystem::exists(s_GamePath / "NFSMW_WideScreenMode.bin")) {
+            targetRelPath = "NFSMW_WideScreenMode.bin";
+        } else if (std::filesystem::exists(s_GamePath / "GLOBAL" / "NFSMW_WideScreenMode.tpk")) {
+            targetRelPath = "GLOBAL\\NFSMW_WideScreenMode.tpk";
+        } else if (std::filesystem::exists(s_GamePath / "scripts" / "NFSMW_WideScreenMode.tpk")) {
+            targetRelPath = "scripts\\NFSMW_WideScreenMode.tpk";
+        } else if (std::filesystem::exists(s_GamePath / "GLOBAL" / "NFSMW_WideScreenFix.bin")) {
             targetRelPath = "GLOBAL\\NFSMW_WideScreenFix.bin";
         } else if (std::filesystem::exists(s_GamePath / "scripts" / "NFSMW_WideScreenFix.bin")) {
             targetRelPath = "scripts\\NFSMW_WideScreenFix.bin";
