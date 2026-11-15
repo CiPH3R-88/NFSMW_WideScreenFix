@@ -23,6 +23,18 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 - **Skip Intro:** Bypasses startup logos and intro movies (`SkipIntro`).
 - **Full-Color Range Videos:** Custom YUV lookup table expansion restores deep blacks and full color vibrancy (0–255) instead of washed-out limited range (16–235).
 
+### 🎮 Gamepad & Controller Support
+
+- **Native Xbox & PlayStation Controller Support:** Full support for modern controllers with auto-detection of Xbox (XInput / Microsoft VID) and PlayStation (DualShock 3/4, DualSense 5, Sony VID) layouts.
+- **Dynamic In-Game Button Icons:** Injects high-resolution controller button icons (A/B/X/Y, Cross/Circle/Square/Triangle, LB/RB/L1/R1, LT/RT/L2/R2, D-pad, Start, Back/Select) into all UI menus, HUD prompts, and Controls options.
+- **Seamless Input Switching:** Automatically switches between Gamepad and Keyboard icons on the fly based on your latest input activity.
+- **Full Hotplugging & Disconnect Handling:** Connect or disconnect your controller at any time before or during gameplay. Menus and the in-game Controls tab adapt dynamically without freezing or requiring a restart.
+- **Persistent Custom Keybindings:** Your custom controller bindings persist across game sessions and hotplugs (`NFSMW_ControllerBinds.dat` stored beside `Settings.ini`), eliminating the vanilla bug where bindings revert to factory defaults.
+- **Simultaneous Keyboard + Controller:** Blends keyboard and gamepad inputs simultaneously — control driving or pause with keyboard keys without locking out the gamepad.
+- **In-Game Controller Option:** Adds a Controller toggle directly in the in-game **Gameplay Options** menu (`Off`, `Xbox`, `PlayStation`) when `GamepadSupport = 3` (Auto).
+- **Deadzone & Trigger Calibration:** Proportional stick deadzones (`LeftStickDeadzone`, `RightStickDeadzone`) and analog trigger resting filter to eliminate stick drift and unwanted trigger inputs.
+- **Quality-of-Life Shortcuts:** Start button pauses the game; pressing Left Stick + Right Stick simultaneously resets your car.
+
 ### 🔊 Audio
 
 - **High-Spec Audio:** Forces the audio mixer to run at full CD quality (44,100 Hz) by default, bypassing 22,050 Hz low-spec fallbacks.
@@ -33,7 +45,7 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 - **GPU Vendor Emulation:** Override PCI Vendor ID (Nvidia, AMD, Intel) to enable vendor-specific features and fixes.
 - **Dynamic Shadows:** Customizable shadow map resolution (up to 16384), auto-scaling based on aspect ratio, increased shadow LOD detail, and tunnel/bridge disappearance fix.
 - **Console Gamma & Motion Blur:** Console / MW gamma modes and in-game motion blur toggle.
-- **NOS Trail:** Option to toggle NOS trails on/off or fine-tune trail length and origin offsets.
+- **NOS Trail:** Option to toggle NOS trails on/off or fine-tune trail length and origin offsets, with an optional fix to keep trails visible/frozen while paused (`NOSFlareTrailPauseFix`).
 
 ### ⚙️ Miscellaneous
 
@@ -59,8 +71,8 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 | `[MOVIES]`    | `WideScreenMovie` (1 = Fill 16:9, 2 = Aspect Correct), `MovieType` (0 = Auto, 1 = NTSC, 2 = PAL), `SkipIntro`        |
 | `[GRAPHICS]`  | `MotionBlur`, `ConsoleGamma`, `GPUVendor`, `SimRate` (1 = Dynamic, 2 = Fixed 200Hz)                                   |
 | `[SHADOW]`    | `ShadowsRes`, `ShadowsFix`, `ImproveShadowLOD`, `AutoScaleShadowsRes`, `ShadowMapTextureFormat`, `ForceSharpShadows` |
-| `[MISC]`      | `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`, `Win Cursor`                                              |
-| `[NOS TRAIL]` | `NosTrail`, `NOSTrailLength`, `NOSTrailPositionScalar`                                                                |
+| `[MISC]`      | `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`, `Win Cursor`, `GamepadSupport`, `LeftStickDeadzone`, `RightStickDeadzone` |
+| `[NOS TRAIL]` | `NosTrail`, `NOSTrailLength`, `NOSTrailPositionScalar`, `NOSFlareTrailPauseFix`                                      |
 
 ---
 
