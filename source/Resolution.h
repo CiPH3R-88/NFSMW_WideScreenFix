@@ -508,6 +508,7 @@ namespace Resolution {
 
     // Hook GetLocalizedWideString (0x0057E920) to translate custom resolution hashes
     using PFN_GetLocalizedWideString = char(__cdecl*)(wchar_t*, int, unsigned int);
+    inline PFN_GetLocalizedWideString s_OrigGetLocalizedWideString = nullptr;
 
     inline char __cdecl Hook_GetLocalizedWideString(wchar_t* out, int size, unsigned int hash) {
         auto it = g_ResolutionLabels.find(static_cast<int>(hash));
@@ -515,6 +516,9 @@ namespace Resolution {
             std::wstring ws(it->second.begin(), it->second.end());
             wcsncpy_s(out, size, ws.c_str(), _TRUNCATE);
             return 1;
+        }
+        if (s_OrigGetLocalizedWideString) {
+            return s_OrigGetLocalizedWideString(out, size, hash);
         }
         return reinterpret_cast<PFN_GetLocalizedWideString>(0x0057E920)(out, size, hash);
     }
@@ -559,15 +563,22 @@ namespace Resolution {
         // 7. Hook VOScreenResolution::Draw resolution string hash loader: 0x0051B818
         MemoryTools::MakeCALL(0x0051B818, reinterpret_cast<uintptr_t>(VOScreenResolution_Draw_HashHook));
 
-        // 8. Hook GetLocalizedWideString at all call sites to format custom resolution labels:
-        // 0x00515064: Options validation
-        // 0x005151D4: Options update
-        // 0x00524F70: FEng text drawing
-        // 0x005A442D: Menu option text renderer
-        MemoryTools::MakeCALL(0x00515064, reinterpret_cast<uintptr_t>(Hook_GetLocalizedWideString));
-        MemoryTools::MakeCALL(0x005151D4, reinterpret_cast<uintptr_t>(Hook_GetLocalizedWideString));
-        MemoryTools::MakeCALL(0x00524F70, reinterpret_cast<uintptr_t>(Hook_GetLocalizedWideString));
-        MemoryTools::MakeCALL(0x005A442D, reinterpret_cast<uintptr_t>(Hook_GetLocalizedWideString));
+        // 8. Hook GetLocalizedWideString at all call sites with chaining support
+        auto hookCallSite = [](uintptr_t callSite, PFN_GetLocalizedWideString hookFn) {
+            if (*reinterpret_cast<uint8_t*>(callSite) == 0xE8) {
+                int32_t rel = *reinterpret_cast<int32_t*>(callSite + 1);
+                uintptr_t target = (callSite + 5) + rel;
+                if (!s_OrigGetLocalizedWideString && target != reinterpret_cast<uintptr_t>(hookFn)) {
+                    s_OrigGetLocalizedWideString = reinterpret_cast<PFN_GetLocalizedWideString>(target);
+                }
+            }
+            MemoryTools::MakeCALL(callSite, reinterpret_cast<uintptr_t>(hookFn));
+        };
+
+        hookCallSite(0x00515064, Hook_GetLocalizedWideString);
+        hookCallSite(0x005151D4, Hook_GetLocalizedWideString);
+        hookCallSite(0x00524F70, Hook_GetLocalizedWideString);
+        hookCallSite(0x005A442D, Hook_GetLocalizedWideString);
 
         // 9. Hook eViewPlatInterface::ResetDevice (0x006DB0D0) at all 5 call sites
         MemoryTools::MakeCALL(0x006DB302, reinterpret_cast<uintptr_t>(ResetDeviceHook));
