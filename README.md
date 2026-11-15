@@ -39,8 +39,8 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 
 - **Windows Cursor Toggle:** Optional hardware Windows OS cursor in menus without software cursor latency or stretching (`Win Cursor`).
 - **Portable Saves & Registry:** Redirects game settings from Windows Registry into a local file and supports custom save game folders (`WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`).
-- **Modular Controller Support:** Controller support (XInput, DualShock/DualSense icons, edge detection, analog sticks) has been decoupled into its own standalone companion mod (`ControllerSupport`).
-- **Mod Compatibility:** Works out of the box with **ControllerSupport**, **X360Stuff**, and **Sunset Mod** with automatic conflict resolution.
+- **Modular Controller Support:** Controller support (XInput, DualShock/DualSense icons, edge detection, analog sticks) has been decoupled into its own standalone companion mod (`NFSMW_ControllerSupport`).
+- **Mod Compatibility:** Works out of the box with **NFSMW_ControllerSupport**, **X360Stuff**, and **Sunset Mod** with automatic conflict resolution.
 
 ---
 
