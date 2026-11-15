@@ -13,6 +13,7 @@
 #include "Shadowfix.h"
 #include "NOSTrailfix.h"
 #include "HighSpecAudio.h"
+#include "GamepadSupport.h"
 
 static void InitializeMod() {
     static bool s_Initialized = false;
@@ -76,15 +77,24 @@ static void InitializeMod() {
         g_Config.ForceSharpShadows
     );
 
-    // 10. NOS Trail (Enables/disables trail, optional custom length and position offset)
+    // 10. NOS Trail (Enables/disables trail, optional custom length, position offset, and pause freeze)
     NOSTrailFix::Init(
         g_Config.NosTrail != 0,
         g_Config.NOSTrailLength,
-        g_Config.NOSTrailPositionScalar
+        g_Config.NOSTrailPositionScalar,
+        g_Config.NOSFlareTrailPauseFix != 0
     );
 
     // 11. High-Spec Audio (Forces 44,100 Hz CD-quality audio by default)
     HighSpecAudio::Init();
+
+    // 12. Gamepad Support (UI icons, analog stick deadzones, console menu navigation)
+    GamepadSupport::Init(
+        g_Config.GamepadSupport,
+        g_Config.LeftStickDeadzone,
+        g_Config.RightStickDeadzone,
+        g_Config.GamePath
+    );
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {

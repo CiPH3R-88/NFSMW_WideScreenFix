@@ -13,6 +13,16 @@ namespace NOSTrailFix {
     constexpr uintptr_t ADDR_NOS_TRAIL_LENGTH = 0x00745038; // 8 bytes: EB 06 8D 9B 00 00 00 00
     constexpr uintptr_t ADDR_NOS_TRAIL_CALL   = 0x007450E8; // call CarRenderInfo::RenderFlaresOnCar
 
+    // Pause Fix addresses (VehicleRenderConn::RenderFlares & FEManager::mPauseRequest)
+    inline const uintptr_t ADDR_PAUSE_REQUEST    = 0x0091CAE4; // FEManager::mPauseRequest
+    inline const uintptr_t ADDR_HISTORY_HOOK     = 0x00744F0C; // cmp [edi+1280h], ecx (6 bytes: 39 8F 80 12 00 00)
+    inline const uintptr_t RET_HISTORY_NORMAL    = 0x00744F12; // jge loc_744F1A
+    inline const uintptr_t JMP_HISTORY_SKIP      = 0x00744F79; // loc_744F79
+
+    inline const uintptr_t ADDR_SPEED_CHECK_HOOK = 0x00744FA7; // jnz loc_74510E (6 bytes: 0F 85 61 01 00 00)
+    inline const uintptr_t RET_SPEED_CONTINUE    = 0x00744FAD; // mov edx, [esp+10h]
+    inline const uintptr_t JMP_SPEED_SKIP        = 0x0074510E; // loc_74510E
+
     struct bVector3 {
         float x, y, z;
     };
@@ -78,7 +88,43 @@ namespace NOSTrailFix {
         s_OrigRenderFlaresOnCar(thisCarRenderInfo, pView, pPosition, &adjustedMatrix, flag1, flag2, flag3);
     }
 
-    inline void Init(bool nosTrailEnabled, float trailLength = 0.0f, float positionScalar = 0.0f) {
+    // Hook at 0x00744F0C: Freezes the 3-frame history ring buffer while paused so previous positions are preserved
+    __declspec(naked) inline void Hook_HistoryBufferPause() {
+        __asm {
+            cmp dword ptr ds:[0x0091CAE4], 0
+            jne skip_history
+
+            // Original instruction: cmp [edi+1280h], ecx
+            cmp dword ptr [edi + 0x1280], ecx
+            jmp dword ptr [RET_HISTORY_NORMAL]
+
+        skip_history:
+            jmp dword ptr [JMP_HISTORY_SKIP]
+        }
+    }
+
+    // Hook at 0x00744FA7: Bypasses velocity check when paused so trail loop still renders frozen flare quads
+    __declspec(naked) inline void Hook_SpeedCheckPause() {
+        __asm {
+            // Evaluate flags from original (test ah, 41h at 0x00744FA4)
+            jnz speed_below_threshold
+            // Speed > 0.2f: proceed to trail rendering
+            jmp dword ptr [RET_SPEED_CONTINUE]
+
+        speed_below_threshold:
+            // Speed <= 0.2f. If paused, keep rendering trail!
+            cmp dword ptr ds:[0x0091CAE4], 0
+            jne continue_paused
+
+            // Not paused: skip trail rendering
+            jmp dword ptr [JMP_SPEED_SKIP]
+
+        continue_paused:
+            jmp dword ptr [RET_SPEED_CONTINUE]
+        }
+    }
+
+    inline void Init(bool nosTrailEnabled, float trailLength = 0.0f, float positionScalar = 0.0f, bool pauseFix = false) {
         // Toggle: 0x00744FB7 (31 C0 = xor eax, eax skips trail; 85 C0 = test eax, eax) - Verified from IDA
         if (!nosTrailEnabled) {
             MemoryTools::Write<uint16_t>(ADDR_NOS_TRAIL_TEST, 0xC031);
@@ -99,6 +145,12 @@ namespace NOSTrailFix {
         if (s_NOSTrailPositionScalar > 0.0f) {
             s_OrigRenderFlaresOnCar = reinterpret_cast<PFN_RenderFlaresOnCar>(MemoryTools::GetCallTarget(ADDR_NOS_TRAIL_CALL));
             MemoryTools::MakeCALL(ADDR_NOS_TRAIL_CALL, reinterpret_cast<uintptr_t>(Hook_RenderFlaresOnCar));
+        }
+
+        // Pause Fix: Freeze history ring buffer and bypass speed check during pause
+        if (pauseFix) {
+            MemoryTools::MakeJMP(ADDR_HISTORY_HOOK, reinterpret_cast<uintptr_t>(Hook_HistoryBufferPause), 1);
+            MemoryTools::MakeJMP(ADDR_SPEED_CHECK_HOOK, reinterpret_cast<uintptr_t>(Hook_SpeedCheckPause), 1);
         }
     }
 }

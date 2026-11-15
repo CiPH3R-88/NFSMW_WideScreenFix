@@ -40,11 +40,15 @@ struct Settings {
     int NosTrail = 1;
     float NOSTrailLength = 0.0f;
     float NOSTrailPositionScalar = 0.0f;
+    int NOSFlareTrailPauseFix = 0;
 
     // MISC
     int SkipIntro = 0;
     int WriteSettingsToFile = 0;
     int WinCursor = 0; // 0 = Off (default, block Windows cursor), 1 = On (allow Windows cursor)
+    int GamepadSupport = 3; // 0 = Off, 1 = Xbox, 2 = PlayStation, 3 = Auto Detect
+    float LeftStickDeadzone = 10.0f;
+    float RightStickDeadzone = 10.0f;
     std::string CustomUserFilesDirectoryInGameDir = "";
 
     std::filesystem::path IniPath;
@@ -104,6 +108,9 @@ struct Settings {
         NOSTrailPositionScalar = static_cast<float>(atof(nosPosBuf));
         if (NOSTrailPositionScalar < 0.0f) NOSTrailPositionScalar = 0.0f;
 
+        NOSFlareTrailPauseFix = GetPrivateProfileIntA("NOSTRAIL", "NOSFlareTrailPauseFix", -1, iniStr.c_str());
+        if (NOSFlareTrailPauseFix == -1) NOSFlareTrailPauseFix = GetPrivateProfileIntA("NOS TRAIL", "NOSFlareTrailPauseFix", 0, iniStr.c_str());
+
         // Toru's X360Stuff applies HUD aspect correction, widescreen placement,
         // and entirely replaces the shadow map rendering pipeline.
         X360StuffInstalled = std::filesystem::exists(GamePath / "scripts" / "X360Stuff.asi");
@@ -124,6 +131,22 @@ struct Settings {
         if (!WinCursor) {
             WinCursor = GetPrivateProfileIntA("MISC", "Win Cursor", 0, iniStr.c_str());
         }
+
+        GamepadSupport = GetPrivateProfileIntA("MISC", "GamepadSupport", -1, iniStr.c_str());
+        if (GamepadSupport == -1) {
+            GamepadSupport = GetPrivateProfileIntA("MISC", "ImproveGamepadSupport", 3, iniStr.c_str());
+        }
+        if (GamepadSupport < 0 || GamepadSupport > 3) {
+            GamepadSupport = 3;
+        }
+
+        char leftDzBuf[64] = { 0 };
+        GetPrivateProfileStringA("MISC", "LeftStickDeadzone", "10.0", leftDzBuf, sizeof(leftDzBuf), iniStr.c_str());
+        LeftStickDeadzone = static_cast<float>(atof(leftDzBuf));
+
+        char rightDzBuf[64] = { 0 };
+        GetPrivateProfileStringA("MISC", "RightStickDeadzone", "10.0", rightDzBuf, sizeof(rightDzBuf), iniStr.c_str());
+        RightStickDeadzone = static_cast<float>(atof(rightDzBuf));
 
         char userDirBuf[MAX_PATH] = { 0 };
         GetPrivateProfileStringA("MISC", "CustomUserFilesDirectoryInGameDir", "0", userDirBuf, MAX_PATH, iniStr.c_str());
