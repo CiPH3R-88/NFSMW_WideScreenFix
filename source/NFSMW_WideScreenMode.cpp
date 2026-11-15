@@ -19,7 +19,7 @@ static void InitializeMod() {
     if (s_Initialized) return;
     s_Initialized = true;
 
-    // 1. Load configuration from NFSMW_WideScreenFix.ini
+    // 1. Load configuration from NFSMW_WideScreenMode.ini
     g_Config.Load();
 
     // 2. Resolution System (Menu integration, seamless runtime switching, display mode enumeration)

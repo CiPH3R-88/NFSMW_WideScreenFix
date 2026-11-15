@@ -170,7 +170,7 @@ namespace UserSettings {
         std::string readVal(buf);
 
         // Special handling for g_RacingResolution: always honor the mod's active resolution index
-        // which was determined from NFSMW_WideScreenFix.ini (ResX/ResY) on startup
+        // which was determined from NFSMW_WideScreenMode.ini (ResX/ResY) on startup
         if (valName == "g_RacingResolution") {
             int resolvedIndex = Resolution::g_ActiveResIndex;
 

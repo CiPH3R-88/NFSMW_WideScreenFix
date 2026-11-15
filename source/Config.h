@@ -59,12 +59,6 @@ struct Settings {
         if (!std::filesystem::exists(IniPath)) {
             IniPath = GamePath / "NFSMW_WideScreenMode.ini";
         }
-        if (!std::filesystem::exists(IniPath)) {
-            IniPath = GamePath / "scripts" / "NFSMW_WideScreenFix.ini";
-        }
-        if (!std::filesystem::exists(IniPath)) {
-            IniPath = GamePath / "NFSMW_WideScreenFix.ini";
-        }
 
         std::string iniStr = IniPath.string();
 

@@ -113,7 +113,7 @@ namespace Motionblur {
         g_Config.MotionBlur = enabled ? 1 : 0;
 
         if (saveToDisk) {
-            // 4. Persist to NFSMW_WideScreenFix.ini while preserving inline comments
+            // 4. Persist to NFSMW_WideScreenMode.ini while preserving inline comments
             SaveMotionBlurToIni(enabled);
 
             // 5. Persist to local Settings.ini if WriteSettingsToFile is active
