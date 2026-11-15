@@ -1,4 +1,4 @@
-# NFSMW WideScreen Fix
+# NFSMW_WideScreenMode
 
 A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005) v1.3**, built from the ground up with clean C++ and reverse engineering in IDA Pro.
 
@@ -31,7 +31,7 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 - **Full Hotplugging & Disconnect Handling:** Connect or disconnect your controller at any time before or during gameplay. Menus and the in-game Controls tab adapt dynamically without freezing or requiring a restart.
 - **Persistent Custom Keybindings:** Your custom controller bindings persist across game sessions and hotplugs (`NFSMW_ControllerBinds.dat` stored beside `Settings.ini`), eliminating the vanilla bug where bindings revert to factory defaults.
 - **Simultaneous Keyboard + Controller:** Blends keyboard and gamepad inputs simultaneously — control driving or pause with keyboard keys without locking out the gamepad.
-- **In-Game Controller Option:** Adds a Controller toggle directly in the in-game **Gameplay Options** menu (`Off`, `Xbox`, `PlayStation`) when `GamepadSupport = 3` (Auto).
+- **In-Game Controller Option:** Adds a Controller toggle directly in the in-game **Gameplay Options** menu (`Off`, `Xbox`, `PlayStation`) when `ControllerSupport = 3` (Auto).
 - **Deadzone & Trigger Calibration:** Proportional stick deadzones (`LeftStickDeadzone`, `RightStickDeadzone`) and analog trigger resting filter to eliminate stick drift and unwanted trigger inputs.
 - **Quality-of-Life Shortcuts:** Start button pauses the game; pressing Left Stick + Right Stick simultaneously resets your car.
 
@@ -57,22 +57,22 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 
 ## Installation
 
-1. Copy `NFSMW_WideScreenFix.asi` and `NFSMW_WideScreenFix.ini` into your game's `scripts/` folder (requires an ASI Loader - [`dinput8.dll`](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases)).
-2. Configure settings inside `NFSMW_WideScreenFix.ini` to your preference.
+1. Copy `NFSMW_WideScreenMode.asi` and `NFSMW_WideScreenMode.ini` into your game's `scripts/` folder (requires an ASI Loader - [`dinput8.dll`](https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases)).
+2. Configure settings inside `NFSMW_WideScreenMode.ini` to your preference.
 
 ---
 
 ## Configuration Overview
 
-| Section       | Key Settings                                                                                                          |
-| :------------ | :-------------------------------------------------------------------------------------------------------------------- |
-| `[DISPLAY]`   | `ResX`, `ResY`, `WindowMode` (0 = Fullscreen, 1 = Borderless, 2 = Border, 3 = Resizable, etc.)                        |
-| `[HUD]`       | `FixHUD`, `WideScreenHUD`, `SplashScreen` (0 = Auto, 1 = 4:3, 2 = Widescreen)                                         |
-| `[MOVIES]`    | `WideScreenMovie` (1 = Fill 16:9, 2 = Aspect Correct), `MovieType` (0 = Auto, 1 = NTSC, 2 = PAL), `SkipIntro`        |
-| `[GRAPHICS]`  | `MotionBlur`, `ConsoleGamma`, `GPUVendor`, `SimRate` (1 = Dynamic, 2 = Fixed 200Hz)                                   |
-| `[SHADOW]`    | `ShadowsRes`, `ShadowsFix`, `ImproveShadowLOD`, `AutoScaleShadowsRes`, `ShadowMapTextureFormat`, `ForceSharpShadows` |
-| `[MISC]`      | `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`, `Win Cursor`, `GamepadSupport`, `LeftStickDeadzone`, `RightStickDeadzone` |
-| `[NOS TRAIL]` | `NosTrail`, `NOSTrailLength`, `NOSTrailPositionScalar`, `NOSFlareTrailPauseFix`                                      |
+| Section       | Key Settings                                                                                                                             |
+| :------------ | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| `[DISPLAY]`   | `ResX`, `ResY`, `WindowMode` (0 = Fullscreen, 1 = Borderless, 2 = Border, 3 = Resizable, etc.)                                           |
+| `[HUD]`       | `FixHUD`, `WideScreenHUD`, `SplashScreen` (0 = Auto, 1 = 4:3, 2 = Widescreen)                                                            |
+| `[MOVIES]`    | `WideScreenMovie` (1 = Fill 16:9, 2 = Aspect Correct), `MovieType` (0 = Auto, 1 = NTSC, 2 = PAL), `SkipIntro`                            |
+| `[GRAPHICS]`  | `MotionBlur`, `ConsoleGamma`, `GPUVendor`, `SimRate` (1 = Dynamic, 2 = Fixed 200Hz)                                                      |
+| `[SHADOW]`    | `ShadowsRes`, `ShadowsFix`, `ImproveShadowLOD`, `AutoScaleShadowsRes`, `ShadowMapTextureFormat`, `ForceSharpShadows`                     |
+| `[MISC]`      | `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`, `Win Cursor`, `ControllerSupport`, `LeftStickDeadzone`, `RightStickDeadzone` |
+| `[NOS TRAIL]` | `NosTrail`, `NOSTrailLength`, `NOSTrailPositionScalar`, `NOSFlareTrailPauseFix`                                                          |
 
 ---
 
