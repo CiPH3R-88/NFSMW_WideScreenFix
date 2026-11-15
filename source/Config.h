@@ -46,7 +46,7 @@ struct Settings {
     int SkipIntro = 0;
     int WriteSettingsToFile = 0;
     int WinCursor = 0; // 0 = Off (default, block Windows cursor), 1 = On (allow Windows cursor)
-    int GamepadSupport = 3; // 0 = Off, 1 = Xbox, 2 = PlayStation, 3 = Auto Detect
+    int ControllerSupport = 3; // 0 = Off, 1 = Xbox, 2 = PlayStation, 3 = Auto Detect
     float LeftStickDeadzone = 10.0f;
     float RightStickDeadzone = 10.0f;
     std::string CustomUserFilesDirectoryInGameDir = "";
@@ -132,12 +132,15 @@ struct Settings {
             WinCursor = GetPrivateProfileIntA("MISC", "Win Cursor", 0, iniStr.c_str());
         }
 
-        GamepadSupport = GetPrivateProfileIntA("MISC", "GamepadSupport", -1, iniStr.c_str());
-        if (GamepadSupport == -1) {
-            GamepadSupport = GetPrivateProfileIntA("MISC", "ImproveGamepadSupport", 3, iniStr.c_str());
+        ControllerSupport = GetPrivateProfileIntA("MISC", "ControllerSupport", -1, iniStr.c_str());
+        if (ControllerSupport == -1) {
+            ControllerSupport = GetPrivateProfileIntA("MISC", "GamepadSupport", -1, iniStr.c_str());
         }
-        if (GamepadSupport < 0 || GamepadSupport > 3) {
-            GamepadSupport = 3;
+        if (ControllerSupport == -1) {
+            ControllerSupport = GetPrivateProfileIntA("MISC", "ImproveGamepadSupport", 3, iniStr.c_str());
+        }
+        if (ControllerSupport < 0 || ControllerSupport > 3) {
+            ControllerSupport = 3;
         }
 
         char leftDzBuf[64] = { 0 };
