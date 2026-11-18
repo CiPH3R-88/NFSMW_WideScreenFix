@@ -33,7 +33,7 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 - **GPU Vendor Emulation:** Override PCI Vendor ID (Nvidia, AMD, Intel) to enable vendor-specific features and fixes.
 - **Dynamic Shadows:** Customizable shadow map resolution (up to 16384), auto-scaling based on aspect ratio, increased shadow LOD detail, and tunnel/bridge disappearance fix.
 - **Console Gamma & Motion Blur:** Console / MW gamma modes and in-game motion blur toggle.
-- **NOS Trail:** Option to toggle NOS trails on/off or fine-tune trail length and origin offsets, with an optional fix to keep trails visible/frozen while game paused (`NOSFlareTrailPauseFix`).
+- **NOS Trail:** Option to toggle NOS trails on/off, customize trail length and origin offsets, fix trail scaling and flickering at high frame rates (`NOSTrailFixForHighFPS`), and keep trails visible/frozen from all 360° camera angles while paused (`NOSFlareTrailPauseFix`).
 
 ### ⚙️ Miscellaneous
 
@@ -61,7 +61,7 @@ A lightweight, modern widescreen plugin for **Need for Speed: Most Wanted (2005)
 | `[GRAPHICS]`  | `MotionBlur`, `ConsoleGamma`, `GPUVendor`, `SimRate` (1 = Dynamic, 2 = Fixed 200Hz)                                  |
 | `[SHADOW]`    | `ShadowsRes`, `ShadowsFix`, `ImproveShadowLOD`, `AutoScaleShadowsRes`, `ShadowMapTextureFormat`, `ForceSharpShadows` |
 | `[MISC]`      | `WriteSettingsToFile`, `CustomUserFilesDirectoryInGameDir`, `Win Cursor`                                             |
-| `[NOS TRAIL]` | `NosTrail`, `NOSTrailLength`, `NOSTrailPositionScalar`, `NOSFlareTrailPauseFix`                                      |
+| `[NOS TRAIL]` | `NOSTrail`, `NOSTrailLength`, `NOSTrailPositionScalar`, `NOSFlareTrailPauseFix`, `NOSTrailFixForHighFPS` |
 
 ---
 
