@@ -41,6 +41,7 @@ struct Settings {
     float NOSTrailLength = 0.0f;
     float NOSTrailPositionScalar = 0.0f;
     int NOSFlareTrailPauseFix = 0;
+    int NOSTrailFixForHighFPS = 1;
 
     // MISC
     int SkipIntro = 0;
@@ -90,8 +91,8 @@ struct Settings {
         ForceSharpShadows = GetPrivateProfileIntA("SHADOW", "ForceSharpShadows", 0, iniStr.c_str());
 
         // NOSTRAIL (support both [NOSTRAIL] and [NOS TRAIL])
-        NosTrail = GetPrivateProfileIntA("NOSTRAIL", "NosTrail", -1, iniStr.c_str());
-        if (NosTrail == -1) NosTrail = GetPrivateProfileIntA("NOS TRAIL", "NosTrail", 1, iniStr.c_str());
+        NosTrail = GetPrivateProfileIntA("NOSTRAIL", "NOSTrail", -1, iniStr.c_str());
+        if (NosTrail == -1) NosTrail = GetPrivateProfileIntA("NOS TRAIL", "NOSTrail", 1, iniStr.c_str());
 
         char nosLenBuf[64] = { 0 };
         GetPrivateProfileStringA("NOSTRAIL", "NOSTrailLength", "", nosLenBuf, sizeof(nosLenBuf), iniStr.c_str());
@@ -107,6 +108,9 @@ struct Settings {
 
         NOSFlareTrailPauseFix = GetPrivateProfileIntA("NOSTRAIL", "NOSFlareTrailPauseFix", -1, iniStr.c_str());
         if (NOSFlareTrailPauseFix == -1) NOSFlareTrailPauseFix = GetPrivateProfileIntA("NOS TRAIL", "NOSFlareTrailPauseFix", 0, iniStr.c_str());
+
+        NOSTrailFixForHighFPS = GetPrivateProfileIntA("NOSTRAIL", "NOSTrailFixForHighFPS", -1, iniStr.c_str());
+        if (NOSTrailFixForHighFPS == -1) NOSTrailFixForHighFPS = GetPrivateProfileIntA("NOS TRAIL", "NOSTrailFixForHighFPS", 1, iniStr.c_str());
 
         // Toru's X360Stuff applies HUD aspect correction, widescreen placement,
         // and entirely replaces the shadow map rendering pipeline.

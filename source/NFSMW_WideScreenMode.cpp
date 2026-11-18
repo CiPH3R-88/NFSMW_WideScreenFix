@@ -47,7 +47,8 @@ static void InitializeMod() {
     // 7. Motion Blur. Sunset mod owns its own Video Settings option when installed.
     if (!g_Config.SunSetInstalled) {
         Motionblur::Init(g_Config.MotionBlur != 0);
-    } else {
+    }
+    else {
         Motionblur::s_MotionBlurEnabled = false;
     }
 
@@ -76,12 +77,15 @@ static void InitializeMod() {
         g_Config.ForceSharpShadows
     );
 
-    // 10. NOS Trail (Enables/disables trail, optional custom length, position offset, and pause freeze)
+    // 10. NOS Trail (Enables/disables trail, optional custom length, position offset, pause freeze, and high-FPS flicker fix)
+    float activeSimHz = (g_Config.SimRate != 0) ? SimRate::s_SimHz : static_cast<float>(SimRate::GetDesktopRefreshRate());
     NOSTrailFix::Init(
         g_Config.NosTrail != 0,
         g_Config.NOSTrailLength,
         g_Config.NOSTrailPositionScalar,
-        g_Config.NOSFlareTrailPauseFix != 0
+        g_Config.NOSFlareTrailPauseFix != 0,
+        g_Config.NOSTrailFixForHighFPS != 0,
+        activeSimHz
     );
 
     // 11. High-Spec Audio (Forces 44,100 Hz CD-quality audio by default)
@@ -98,7 +102,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         if (strstr(moduleName, "speed.exe") || strstr(moduleName, "SPEED.EXE")) {
             InitializeMod();
         }
-    } else if (fdwReason == DLL_PROCESS_DETACH) {
+    }
+    else if (fdwReason == DLL_PROCESS_DETACH) {
         SimRate::Shutdown();
     }
     return TRUE;
