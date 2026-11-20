@@ -15,7 +15,8 @@ struct Settings {
     // GRAPHICS
     int MotionBlur = 1; // 0 = Off, 1 = On
     int GPUVendor = 1;  // 0 = Off, 1 = Nvidia (0x10DE), 2 = AMD (0x1002), 3 = Intel (0x8086)
-    int SimRate = 1;    // 0 = Off | 1 = Dynamic (Matches monitor refresh rate, Default) | 2 = Fixed 200Hz | > 2 = Custom Hz
+    int SimRate = 1;       // 0 = Off | 1 = Dynamic (Matches monitor refresh rate, Default) | 2 = Fixed 200Hz | > 2 = Custom Hz
+    int LockGarageFPS = 1; // 0 = Off | 1 = Lock FE Garage / Safehouse to 60 FPS (Default)
 
     // HUD
     int FixHUD = 1;
@@ -35,13 +36,6 @@ struct Settings {
     int AutoScaleShadowsRes = 1;
     int ShadowMapTextureFormat = 0;
     int ForceSharpShadows = 0;
-
-    // NOSTRAIL
-    int NosTrail = 1;
-    float NOSTrailLength = 0.0f;
-    float NOSTrailPositionScalar = 0.0f;
-    int NOSFlareTrailPauseFix = 0;
-    int NOSTrailFixForHighFPS = 1;
 
     // MISC
     int SkipIntro = 0;
@@ -90,28 +84,6 @@ struct Settings {
         ShadowMapTextureFormat = GetPrivateProfileIntA("SHADOW", "ShadowMapTextureFormat", 0, iniStr.c_str());
         ForceSharpShadows = GetPrivateProfileIntA("SHADOW", "ForceSharpShadows", 0, iniStr.c_str());
 
-        // NOSTRAIL (support both [NOSTRAIL] and [NOS TRAIL])
-        NosTrail = GetPrivateProfileIntA("NOSTRAIL", "NOSTrail", -1, iniStr.c_str());
-        if (NosTrail == -1) NosTrail = GetPrivateProfileIntA("NOS TRAIL", "NOSTrail", 1, iniStr.c_str());
-
-        char nosLenBuf[64] = { 0 };
-        GetPrivateProfileStringA("NOSTRAIL", "NOSTrailLength", "", nosLenBuf, sizeof(nosLenBuf), iniStr.c_str());
-        if (!nosLenBuf[0]) GetPrivateProfileStringA("NOS TRAIL", "NOSTrailLength", "0", nosLenBuf, sizeof(nosLenBuf), iniStr.c_str());
-        NOSTrailLength = static_cast<float>(atof(nosLenBuf));
-        if (NOSTrailLength < 0.0f) NOSTrailLength = 0.0f;
-
-        char nosPosBuf[64] = { 0 };
-        GetPrivateProfileStringA("NOSTRAIL", "NOSTrailPositionScalar", "", nosPosBuf, sizeof(nosPosBuf), iniStr.c_str());
-        if (!nosPosBuf[0]) GetPrivateProfileStringA("NOS TRAIL", "NOSTrailPositionScalar", "0.0", nosPosBuf, sizeof(nosPosBuf), iniStr.c_str());
-        NOSTrailPositionScalar = static_cast<float>(atof(nosPosBuf));
-        if (NOSTrailPositionScalar < 0.0f) NOSTrailPositionScalar = 0.0f;
-
-        NOSFlareTrailPauseFix = GetPrivateProfileIntA("NOSTRAIL", "NOSFlareTrailPauseFix", -1, iniStr.c_str());
-        if (NOSFlareTrailPauseFix == -1) NOSFlareTrailPauseFix = GetPrivateProfileIntA("NOS TRAIL", "NOSFlareTrailPauseFix", 0, iniStr.c_str());
-
-        NOSTrailFixForHighFPS = GetPrivateProfileIntA("NOSTRAIL", "NOSTrailFixForHighFPS", -1, iniStr.c_str());
-        if (NOSTrailFixForHighFPS == -1) NOSTrailFixForHighFPS = GetPrivateProfileIntA("NOS TRAIL", "NOSTrailFixForHighFPS", 1, iniStr.c_str());
-
         // Toru's X360Stuff applies HUD aspect correction, widescreen placement,
         // and entirely replaces the shadow map rendering pipeline.
         X360StuffInstalled = std::filesystem::exists(GamePath / "scripts" / "X360Stuff.asi");
@@ -126,6 +98,13 @@ struct Settings {
         SimRate = GetPrivateProfileIntA("GRAPHICS", "SimRate", -1, iniStr.c_str());
         if (SimRate == -1) {
             SimRate = GetPrivateProfileIntA("MISC", "SimRate", 1, iniStr.c_str());
+        }
+        LockGarageFPS = GetPrivateProfileIntA("GRAPHICS", "LockGarageFPS", -1, iniStr.c_str());
+        if (LockGarageFPS == -1) {
+            LockGarageFPS = GetPrivateProfileIntA("GRAPHICS", "LockGarage60FPS", -1, iniStr.c_str());
+            if (LockGarageFPS == -1) {
+                LockGarageFPS = GetPrivateProfileIntA("MISC", "LockGarageFPS", 1, iniStr.c_str());
+            }
         }
         WriteSettingsToFile = GetPrivateProfileIntA("MISC", "WriteSettingsToFile", 0, iniStr.c_str());
         WinCursor = GetPrivateProfileIntA("MISC", "WinCursor", 0, iniStr.c_str());
