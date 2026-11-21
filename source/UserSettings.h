@@ -18,11 +18,13 @@ namespace UserSettings {
     inline bool s_UseCustomUserDir = false;
 
     using PFN_SHGetFolderPathA = HRESULT(WINAPI*)(HWND, int, HANDLE, DWORD, LPSTR);
+    using PFN_SHGetFolderPathW = HRESULT(WINAPI*)(HWND, int, HANDLE, DWORD, LPWSTR);
     inline PFN_SHGetFolderPathA s_OrigSHGetFolderPathA = nullptr;
+    inline PFN_SHGetFolderPathW s_OrigSHGetFolderPathW = nullptr;
 
     inline HRESULT WINAPI Hook_SHGetFolderPathA(HWND hwnd, int csidl, HANDLE hToken, DWORD dwFlags, LPSTR pszPath) {
         if (s_UseCustomUserDir) {
-            int folder = csidl & ~CSIDL_FLAG_CREATE;
+            int folder = csidl & 0xFF;
             if (folder == CSIDL_PERSONAL) {
                 std::error_code ec;
                 std::filesystem::create_directories(s_CustomUserDir, ec);
@@ -40,6 +42,62 @@ namespace UserSettings {
         return SHGetFolderPathA(hwnd, csidl, hToken, dwFlags, pszPath);
     }
 
+    inline HRESULT WINAPI Hook_SHGetFolderPathW(HWND hwnd, int csidl, HANDLE hToken, DWORD dwFlags, LPWSTR pszPath) {
+        if (s_UseCustomUserDir) {
+            int folder = csidl & 0xFF;
+            if (folder == CSIDL_PERSONAL) {
+                std::error_code ec;
+                std::filesystem::create_directories(s_CustomUserDir, ec);
+                std::wstring pathStr = s_CustomUserDir.wstring();
+                if (pszPath) {
+                    std::wmemcpy(pszPath, pathStr.c_str(), pathStr.size() + 1);
+                    return S_OK;
+                }
+            }
+        }
+
+        if (s_OrigSHGetFolderPathW) {
+            return s_OrigSHGetFolderPathW(hwnd, csidl, hToken, dwFlags, pszPath);
+        }
+        return SHGetFolderPathW(hwnd, csidl, hToken, dwFlags, pszPath);
+    }
+
+    // Generic 32-bit API inline hook with trampoline
+    inline void* HookApiFunction(void* pTargetFunc, void* pHookFunc) {
+        if (!pTargetFunc || !pHookFunc) return nullptr;
+
+        uint8_t* pTarget = reinterpret_cast<uint8_t*>(pTargetFunc);
+
+        // Follow jmp rel32 if the function is a simple jump thunk
+        if (pTarget[0] == 0xE9) {
+            int32_t relOffset = *reinterpret_cast<int32_t*>(pTarget + 1);
+            pTarget = pTarget + 5 + relOffset;
+        }
+
+        // Allocate executable trampoline buffer
+        uint8_t* pTrampoline = reinterpret_cast<uint8_t*>(VirtualAlloc(NULL, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+        if (!pTrampoline) return nullptr;
+
+        // Copy original 5 bytes to trampoline
+        std::memcpy(pTrampoline, pTarget, 5);
+
+        // Trampoline jumps back to target + 5
+        pTrampoline[5] = 0xE9; // JMP rel32
+        *reinterpret_cast<int32_t*>(pTrampoline + 6) = static_cast<int32_t>((pTarget + 5) - (pTrampoline + 10));
+
+        // Overwrite target with JMP rel32 to hook function
+        DWORD oldProtect;
+        VirtualProtect(pTarget, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+        pTarget[0] = 0xE9; // JMP rel32
+        *reinterpret_cast<int32_t*>(pTarget + 1) = static_cast<int32_t>(reinterpret_cast<uint8_t*>(pHookFunc) - (pTarget + 5));
+        VirtualProtect(pTarget, 5, oldProtect, &oldProtect);
+
+        FlushInstructionCache(GetCurrentProcess(), pTarget, 5);
+        FlushInstructionCache(GetCurrentProcess(), pTrampoline, 32);
+
+        return pTrampoline;
+    }
+
     inline void InitCustomUserFiles(const std::filesystem::path& gamePath, const std::string& customDirName) {
         if (customDirName.empty() || customDirName == "0") return;
 
@@ -48,13 +106,38 @@ namespace UserSettings {
         std::error_code ec;
         std::filesystem::create_directories(s_CustomUserDir, ec);
 
-        // Patch speed.exe fixed IAT address at 0x008902EC (SHFOLDER.dll!SHGetFolderPathA)
+        // 1. Globally hook shell32.dll!SHGetFolderPathA and SHGetFolderPathW (catches all ASI plugins like Unlimiter)
+        HMODULE hShell32 = GetModuleHandleA("shell32.dll");
+        if (!hShell32) hShell32 = LoadLibraryA("shell32.dll");
+        void* pShell32A = hShell32 ? reinterpret_cast<void*>(GetProcAddress(hShell32, "SHGetFolderPathA")) : nullptr;
+        void* pShell32W = hShell32 ? reinterpret_cast<void*>(GetProcAddress(hShell32, "SHGetFolderPathW")) : nullptr;
+
+        if (pShell32A) {
+            void* pTrampA = HookApiFunction(pShell32A, reinterpret_cast<void*>(Hook_SHGetFolderPathA));
+            if (pTrampA) s_OrigSHGetFolderPathA = reinterpret_cast<PFN_SHGetFolderPathA>(pTrampA);
+        }
+        if (pShell32W) {
+            void* pTrampW = HookApiFunction(pShell32W, reinterpret_cast<void*>(Hook_SHGetFolderPathW));
+            if (pTrampW) s_OrigSHGetFolderPathW = reinterpret_cast<PFN_SHGetFolderPathW>(pTrampW);
+        }
+
+        // 2. Also hook shfolder.dll!SHGetFolderPathA if it has a distinct entry point
+        HMODULE hShfolder = GetModuleHandleA("shfolder.dll");
+        if (!hShfolder) hShfolder = LoadLibraryA("shfolder.dll");
+        if (hShfolder) {
+            void* pShfolderA = reinterpret_cast<void*>(GetProcAddress(hShfolder, "SHGetFolderPathA"));
+            if (pShfolderA && pShfolderA != pShell32A) {
+                HookApiFunction(pShfolderA, reinterpret_cast<void*>(Hook_SHGetFolderPathA));
+            }
+        }
+
+        // 3. Patch speed.exe fixed IAT address at 0x008902EC (SHFOLDER.dll!SHGetFolderPathA)
         PROC* pDirectIAT = reinterpret_cast<PROC*>(0x008902EC);
-        s_OrigSHGetFolderPathA = reinterpret_cast<PFN_SHGetFolderPathA>(*pDirectIAT);
         DWORD oldProtect;
-        MemoryTools::Unprotect(reinterpret_cast<uintptr_t>(pDirectIAT), sizeof(PROC), oldProtect);
-        *pDirectIAT = reinterpret_cast<PROC>(Hook_SHGetFolderPathA);
-        MemoryTools::RestoreProtect(reinterpret_cast<uintptr_t>(pDirectIAT), sizeof(PROC), oldProtect);
+        if (MemoryTools::Unprotect(reinterpret_cast<uintptr_t>(pDirectIAT), sizeof(PROC), oldProtect)) {
+            *pDirectIAT = reinterpret_cast<PROC>(Hook_SHGetFolderPathA);
+            MemoryTools::RestoreProtect(reinterpret_cast<uintptr_t>(pDirectIAT), sizeof(PROC), oldProtect);
+        }
     }
 
     // ------------------------------------------------------------------------
